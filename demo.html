@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doughboy — Live Demo</title>
+  <style>
+    :root {
+      --bg-dark: #0D0907;
+      --bg-card: #1A1310;
+      --bg-card-alt: #221A14;
+      --amber: #C8960A;
+      --amber-glow: rgba(200,150,10,0.12);
+      --green: #2D9E6B;
+      --red: #C43518;
+      --blue: #3B82F6;
+      --purple: #9333ea;
+      --muted: #8C7860;
+      --border: rgba(255,255,255,0.06);
+      --text: #fff;
+      --text-sub: rgba(255,255,255,0.55);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark); color: var(--text);
+      line-height: 1.5; font-size: 15px; overflow-x: hidden;
+    }
+
+    /* ── TOP NAV ── */
+    .demo-topnav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,9,7,0.92); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      height: 56px; display: flex; align-items: center;
+      padding: 0 1.25rem; gap: 0.75rem;
+    }
+    .demo-topnav .logo { font-weight: 900; font-size: 1.05rem; letter-spacing: -0.5px; }
+    .demo-topnav .logo em { font-style: normal; color: var(--amber); }
+    .demo-topnav .demo-badge {
+      background: var(--amber); color: #0D0907;
+      font-size: 0.55rem; font-weight: 900; text-transform: uppercase;
+      letter-spacing: 1.5px; padding: 0.15rem 0.55rem; border-radius: 4px;
+    }
+    .demo-topnav .spacer { flex: 1; }
+    .demo-topnav .nav-bell { font-size: 1.1rem; cursor: pointer; position: relative; }
+    .demo-topnav .bell-dot { position: absolute; top: -2px; right: -4px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid var(--bg-dark); }
+    .demo-topnav .nav-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--amber), #b07c08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 900; color: #0D0907; cursor: pointer;
+    }
+
+    /* ── TAB BAR ── */
+    .demo-tabs {
+      position: sticky; top: 56px; z-index: 90;
+      display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
+      border-bottom: 1px solid var(--border);
+      background: rgba(13,9,7,0.95); backdrop-filter: blur(16px);
+      padding: 0; justify-content: center;
+    }
+    .demo-tabs::-webkit-scrollbar { display: none; }
+    .demo-tab {
+      padding: 0.75rem 1.1rem; font-size: 0.8rem; font-weight: 700;
+      color: var(--text-sub); cursor: pointer; white-space: nowrap;
+      border-bottom: 2.5px solid transparent; transition: all 0.15s;
+      background: none; border-top: none; border-left: none; border-right: none;
+      font-family: inherit; letter-spacing: -0.2px;
+    }
+    .demo-tab:hover { color: var(--text); background: rgba(200,150,10,0.04); }
+    .demo-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+    /* ── SCREEN CONTAINER ── */
+    .demo-screen { display: none; padding: 1.25rem; padding-bottom: 8rem; max-width: 800px; margin: 0 auto; }
+    .demo-screen.active { display: block; }
+
+    /* ── CARDS ── */
+    .dcard {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.1rem 1.15rem; margin-bottom: 0.85rem;
+    }
+    .dcard-header {
+      display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;
+    }
+    .dcard-header .icon { font-size: 1.2rem; flex-shrink: 0; }
+    .dcard-header h3 { font-size: 0.82rem; font-weight: 700; letter-spacing: -0.2px; flex: 1; }
+    .dcard-header .badge {
+      font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.5rem;
+      border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-green { background: rgba(45,158,107,0.15); color: var(--green); }
+    .badge-amber { background: var(--amber-glow); color: var(--amber); }
+    .badge-red { background: rgba(196,53,24,0.15); color: var(--red); }
+    .badge-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+
+    /* ── BATCH ROWS ── */
+    .batch-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .batch-row:hover { background: rgba(200,150,10,0.03); }
+    .batch-row:last-of-type { border-bottom: none; }
+    .batch-id { font-size: 0.78rem; font-weight: 800; color: var(--amber); min-width: 85px; }
+    .batch-info { flex: 1; font-size: 0.75rem; color: var(--text-sub); }
+    .batch-type { color: var(--text); font-weight: 700; }
+    .batch-by { font-size: 0.72rem; color: var(--text-sub); min-width: 45px; text-align: right; }
+
+    /* ── READY BY DOUGH TYPE ── */
+    .ready-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; padding: 0 1rem 0.85rem; }
+    .ready-type { background: var(--bg-card-alt); border-radius: 12px; padding: 0.75rem 0.6rem; text-align: center; cursor: pointer; transition: border-color 0.15s, transform 0.1s; border: 1px solid var(--border); }
+    .ready-type:hover { border-color: rgba(200,150,10,0.25); transform: translateY(-1px); }
+    .ready-count { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+    .ready-count.green { color: var(--green); }
+    .ready-count.amber { color: var(--amber); }
+    .ready-count.blue { color: var(--blue); }
+    .ready-name { font-size: 0.78rem; font-weight: 700; margin-top: 0.3rem; }
+    .ready-sub { font-size: 0.6rem; color: var(--text-sub); margin-top: 0.15rem; }
+
+    /* ── CLICKABLE CARD ── */
+    .dcard-clickable { cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .dcard-clickable:hover { border-color: rgba(200,150,10,0.2); background: rgba(26,19,16,0.8); }
+    .dcard-expand { display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+    .dcard-expand.open { display: block; }
+    .expand-arrow { font-size: 0.7rem; color: var(--muted); transition: transform 0.2s; }
+    .expand-arrow.open { transform: rotate(180deg); }
+
+    /* ── STATS ROW ── */
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem; margin-bottom: 0.85rem; }
+    .stat-row-4 { grid-template-columns: repeat(4, 1fr); }
+    .stat-box {
+      background: var(--bg-card-alt); border-radius: 10px; padding: 0.85rem 0.75rem; text-align: center;
+    }
+    .stat-val { font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+    .stat-val.green { color: var(--green); }
+    .stat-val.amber { color: var(--amber); }
+    .stat-val.red { color: var(--red); }
+    .stat-val.blue { color: var(--blue); }
+    .stat-label { font-size: 0.65rem; color: var(--text-sub); margin-top: 0.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── TABLE ── */
+    .dtable { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .dtable th { text-align: left; padding: 0.5rem 0.6rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 700; }
+    .dtable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border); color: var(--text-sub); }
+    .dtable tr:last-child td { border-bottom: none; }
+    .dtable .bold { color: var(--text); font-weight: 700; }
+    .dtable tr.clickable-row { cursor: pointer; transition: background 0.1s; }
+    .dtable tr.clickable-row:hover { background: rgba(200,150,10,0.04); }
+
+    /* ── PIPELINE ── */
+    .pipe-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; border-radius: 6px; padding-left: 0.4rem; padding-right: 0.4rem; margin: 0 -0.4rem; }
+    .pipe-row:hover { background: rgba(200,150,10,0.04); }
+    .pipe-row:last-child { border-bottom: none; }
+    .pipe-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .pipe-dot.mixing { background: var(--blue); box-shadow: 0 0 6px rgba(59,130,246,0.4); }
+    .pipe-dot.bulk { background: var(--amber); box-shadow: 0 0 6px rgba(200,150,10,0.4); }
+    .pipe-dot.proof { background: var(--purple); box-shadow: 0 0 6px rgba(147,51,234,0.3); }
+    .pipe-dot.ready { background: var(--green); box-shadow: 0 0 6px rgba(45,158,107,0.4); }
+    .pipe-info { flex: 1; min-width: 0; }
+    .pipe-name { font-size: 0.82rem; font-weight: 700; }
+    .pipe-meta { font-size: 0.68rem; color: var(--text-sub); }
+    .pipe-time { font-size: 0.72rem; font-weight: 700; color: var(--amber); text-align: right; white-space: nowrap; }
+    .pipe-detail { display: none; padding: 0.7rem 0.85rem; margin: 0.3rem 0 0.5rem; background: var(--bg-card-alt); border-radius: 10px; font-size: 0.78rem; color: var(--text-sub); line-height: 1.8; }
+    .pipe-detail.open { display: block; animation: fadeUp 0.2s ease; }
+
+    /* ── PROGRESS BAR ── */
+    .prog-track { background: rgba(255,255,255,0.06); border-radius: 6px; height: 6px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
+    .prog-fill.green { background: var(--green); }
+    .prog-fill.amber { background: var(--amber); }
+
+    /* ── TEAM MEMBER ROW ── */
+    .team-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .team-row:hover { background: rgba(200,150,10,0.03); }
+    .team-row:last-child { border-bottom: none; }
+    .team-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 900; color: #0D0907; flex-shrink: 0;
+    }
+    .team-info { flex: 1; min-width: 0; }
+    .team-name { font-size: 0.82rem; font-weight: 700; }
+    .team-role { font-size: 0.68rem; color: var(--text-sub); }
+    .team-status { font-size: 0.68rem; font-weight: 700; }
+    .team-detail { display: none; padding: 0.6rem 0.85rem; margin: 0.25rem 0 0.4rem; background: var(--bg-card-alt); border-radius: 10px; font-size: 0.75rem; color: var(--text-sub); line-height: 1.7; }
+    .team-detail.open { display: block; animation: fadeUp 0.2s ease; }
+
+    /* ── TRAINING MODULES ── */
+    .train-module { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+    .train-module:hover { background: rgba(200,150,10,0.04); }
+    .train-mod-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 900; color: #fff; flex-shrink: 0; }
+    .train-mod-info { flex: 1; min-width: 0; }
+    .train-mod-title { font-size: 0.82rem; font-weight: 700; }
+    .train-mod-meta { font-size: 0.68rem; color: var(--text-sub); margin-top: 0.15rem; }
+    .train-vid-wrap { padding: 0.75rem; }
+    .train-video { width: 100%; border-radius: 10px; background: #000; max-height: 220px; object-fit: cover; }
+    .train-vid-caption { font-size: 0.75rem; color: var(--text-sub); margin: 0.6rem 0; line-height: 1.6; }
+    .train-vid-checklist { display: flex; flex-direction: column; gap: 0.35rem; }
+    .train-check { font-size: 0.72rem; padding: 0.35rem 0.6rem; border-radius: 8px; background: var(--bg-card-alt); display: flex; justify-content: space-between; align-items: center; }
+    .train-check span { color: var(--text-sub); font-size: 0.65rem; }
+    .train-check.done { color: var(--green); }
+    .train-check.pending { color: var(--amber); }
+    .train-check.not-started { color: var(--muted); }
+
+    /* ── ALERT ROW ── */
+    .alert-row { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.7rem 0.85rem; margin-bottom: 0.5rem; background: var(--bg-card-alt); border-radius: 10px; border-left: 3px solid var(--amber); }
+    .alert-row.critical { border-left-color: var(--red); }
+    .alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .alert-text { font-size: 0.78rem; color: var(--text-sub); line-height: 1.5; }
+    .alert-text strong { color: var(--text); }
+    .alert-time { font-size: 0.62rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* ── COUNTDOWN ── */
+    .countdown-box {
+      background: linear-gradient(135deg, rgba(200,150,10,0.1), rgba(200,150,10,0.04));
+      border: 1px solid rgba(200,150,10,0.2); border-radius: 12px;
+      padding: 1rem; text-align: center; margin-bottom: 0.85rem;
+    }
+    .countdown-label { font-size: 0.65rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem; }
+    .countdown-batch { font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+    .countdown-timer { display: flex; gap: 0.5rem; justify-content: center; }
+    .countdown-unit { background: var(--bg-dark); border-radius: 8px; padding: 0.5rem 0.65rem; min-width: 52px; }
+    .countdown-num { font-size: 1.4rem; font-weight: 900; color: var(--amber); letter-spacing: -1px; line-height: 1; }
+    .countdown-lbl { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.2rem; }
+
+    /* ── INLINE TRIAL PROMPT ── */
+    .trial-prompt {
+      background: linear-gradient(135deg, rgba(200,150,10,0.08), rgba(200,150,10,0.02));
+      border: 1px solid rgba(200,150,10,0.15); border-radius: 14px;
+      padding: 1.25rem; text-align: center; margin-bottom: 0.85rem;
+      position: relative;
+    }
+    .trial-prompt.dismissed { display: none; }
+    .trial-prompt h4 { font-size: 0.95rem; font-weight: 900; color: var(--text); margin-bottom: 0.35rem; letter-spacing: -0.3px; }
+    .trial-prompt p { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 0.85rem; line-height: 1.6; }
+    .trial-prompt .trial-btn {
+      background: var(--amber); color: #0D0907; font-weight: 900;
+      font-size: 0.82rem; padding: 0.6rem 1.5rem; border-radius: 8px;
+      border: none; cursor: pointer; font-family: inherit;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .trial-prompt .trial-btn:hover { background: #dda80c; transform: translateY(-1px); }
+    .trial-dismiss { position: absolute; top: 0.6rem; right: 0.75rem; background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 0.25rem; line-height: 1; transition: color 0.15s; }
+    .trial-dismiss:hover { color: var(--text); }
+    .trial-prompt .trial-skip { display: block; margin-top: 0.6rem; font-size: 0.7rem; color: var(--muted); cursor: pointer; background: none; border: none; font-family: inherit; transition: color 0.15s; }
+    .trial-prompt .trial-skip:hover { color: var(--text-sub); }
+
+    /* ── TOAST ── */
+    .demo-toast {
+      position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: rgba(26,19,16,0.95); border: 1px solid rgba(200,150,10,0.3);
+      backdrop-filter: blur(16px); color: var(--text); font-size: 0.82rem; font-weight: 700;
+      padding: 0.65rem 1.25rem; border-radius: 10px; z-index: 300;
+      opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .demo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── BOTTOM CTA BAR ── */
+    .demo-cta-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(13,9,7,0.92); backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(200,150,10,0.2);
+      padding: 0.75rem 1.25rem; display: flex; align-items: center;
+      gap: 0.75rem; justify-content: center;
+    }
+    .demo-cta-bar .msg { font-size: 0.78rem; color: var(--text-sub); font-weight: 600; }
+    .demo-cta-bar .msg em { font-style: normal; color: var(--amber); }
+    .demo-cta-bar .cta-btn {
+      background: var(--amber); color: #0D0907; font-weight: 900;
+      font-size: 0.82rem; padding: 0.55rem 1.25rem; border-radius: 8px;
+      border: none; cursor: pointer; font-family: inherit;
+      transition: background 0.15s, transform 0.1s; white-space: nowrap;
+    }
+    .demo-cta-bar .cta-btn:hover { background: #dda80c; transform: translateY(-1px); }
+
+    /* ── WATERMARK ── */
+    .demo-watermark {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg);
+      font-size: 6rem; font-weight: 900; letter-spacing: 8px;
+      color: rgba(200,150,10,0.025); pointer-events: none; z-index: 50;
+      white-space: nowrap; text-transform: uppercase;
+    }
+
+    /* ── MOBILE NAV ── */
+    .demo-mnav {
+      display: none; position: fixed; bottom: 52px; left: 0; right: 0; z-index: 150;
+      background: rgba(13,9,7,0.95); backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem 0.5rem 0.35rem; justify-content: space-around;
+    }
+    .demo-mnav-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+      font-size: 0.58rem; color: var(--text-sub); font-weight: 600;
+      background: none; border: none; cursor: pointer; padding: 0.2rem 0.5rem;
+      font-family: inherit;
+    }
+    .demo-mnav-btn.active { color: var(--amber); }
+    .demo-mnav-btn .ico { font-size: 1.1rem; }
+
+    /* ── FORM ── */
+    .dinput {
+      width: 100%; padding: 0.6rem 0.75rem; background: var(--bg-card-alt);
+      border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+      font-size: 0.85rem; font-family: inherit;
+    }
+    .dbtn { padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 800; font-size: 0.82rem; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .dbtn-amber { background: var(--amber); color: #0D0907; }
+    .dbtn-amber:hover { background: #dda80c; }
+    .dbtn-ghost { background: rgba(255,255,255,0.06); color: var(--text-sub); }
+    .dbtn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    /* quality buttons */
+    .q-btn { padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.82rem; font-weight: 700; background: rgba(255,255,255,0.04); color: var(--text-sub); cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+    .q-btn:hover { background: rgba(255,255,255,0.08); }
+    .q-btn.selected { background: rgba(200,150,10,0.15); color: var(--amber); border-color: var(--amber); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .demo-mnav { display: flex; }
+      .demo-tabs { display: none; }
+      .stat-row { grid-template-columns: repeat(2, 1fr); }
+      .stat-row-4 { grid-template-columns: repeat(2, 1fr); }
+      .countdown-timer { gap: 0.35rem; }
+      .countdown-unit { min-width: 44px; padding: 0.4rem 0.5rem; }
+      .demo-cta-bar { padding: 0.6rem 0.75rem; }
+      .demo-cta-bar .msg { font-size: 0.7rem; }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .demo-screen.active .dcard { animation: fadeUp 0.35s ease both; }
+    .demo-screen.active .dcard:nth-child(2) { animation-delay: 0.06s; }
+    .demo-screen.active .dcard:nth-child(3) { animation-delay: 0.12s; }
+    .demo-screen.active .dcard:nth-child(4) { animation-delay: 0.18s; }
+    .demo-screen.active .dcard:nth-child(5) { animation-delay: 0.24s; }
+    .demo-screen.active .dcard:nth-child(6) { animation-delay: 0.30s; }
+    .live-dot { display: inline-block; width: 6px; height: 6px; background: var(--green); border-radius: 50%; margin-right: 4px; animation: pulse 2s ease infinite; }
+  </style>
+</head>
+<body>
+
+<div class="demo-watermark">INTERACTIVE DEMO</div>
+<div class="demo-toast" id="demo-toast"></div>
+
+<!-- ── TOP NAV ── -->
+<div class="demo-topnav">
+  <a href="index.html" class="logo" style="text-decoration:none;color:inherit;">Dough<em>boy</em></a>
+  <div class="demo-badge">Live Demo</div>
+  <div class="spacer"></div>
+  <div style="font-size:0.7rem; color:var(--muted); font-weight:600;">Mario's Pizzeria</div>
+  <div class="nav-bell" onclick="demoToast('🔔 2 active alerts — West End EOD overdue, cold proof temp warning')">🔔<span class="bell-dot"></span></div>
+  <div class="nav-avatar" onclick="demoToast('👤 Mario Rossi · Exec Chef · 3 venues')">MR</div>
+</div>
+
+<!-- ── TAB BAR ── -->
+<div class="demo-tabs" id="demo-tab-bar">
+  <button class="demo-tab active" onclick="showDemo('dashboard')">Dashboard</button>
+  <button class="demo-tab" onclick="showDemo('submit')">Submit EOD</button>
+  <button class="demo-tab" onclick="showDemo('batches')">Batch Log</button>
+  <button class="demo-tab" onclick="showDemo('pipeline')">Pipeline</button>
+  <button class="demo-tab" onclick="showDemo('recipes')">Recipes</button>
+  <button class="demo-tab" onclick="showDemo('training')">Training</button>
+  <button class="demo-tab" onclick="showDemo('team')">Team</button>
+  <button class="demo-tab" onclick="showDemo('tools')">Tools</button>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── DASHBOARD ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-dashboard" class="demo-screen active">
+
+  <!-- Next Batch Ready Countdown -->
+  <div class="countdown-box">
+    <div class="countdown-label"><span class="live-dot"></span> Next Batch Ready</div>
+    <div class="countdown-batch">NY Style #B-0407-12 — 48 balls</div>
+    <div class="countdown-timer">
+      <div class="countdown-unit"><div class="countdown-num" id="cd-h">02</div><div class="countdown-lbl">Hours</div></div>
+      <div class="countdown-unit"><div class="countdown-num" id="cd-m">14</div><div class="countdown-lbl">Mins</div></div>
+      <div class="countdown-unit"><div class="countdown-num" id="cd-s">37</div><div class="countdown-lbl">Secs</div></div>
+    </div>
+  </div>
+
+  <!-- Ready by Dough Type — the important number -->
+  <div class="dcard" style="padding-bottom:0.25rem;">
+    <div class="dcard-header"><span class="icon">🟢</span><h3>Ready Now — by Dough Type</h3><span class="badge badge-green" style="background:var(--green); color:#fff;">96 Total</span></div>
+    <div class="ready-grid">
+      <div class="ready-type" onclick="demoToast('NY Style: 48 CBD, 24 Southbank, 24 West End')">
+        <div class="ready-count green">64</div>
+        <div class="ready-name">NY Style</div>
+        <div class="ready-sub">across 3 venues</div>
+      </div>
+      <div class="ready-type" onclick="demoToast('Detroit: 12 CBD, 8 West End')">
+        <div class="ready-count amber">20</div>
+        <div class="ready-name">Detroit</div>
+        <div class="ready-sub">across 2 venues</div>
+      </div>
+      <div class="ready-type" onclick="demoToast('Focaccia: 6 Southbank, 6 West End')">
+        <div class="ready-count blue">12</div>
+        <div class="ready-name">Focaccia</div>
+        <div class="ready-sub">across 2 venues</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stat-row stat-row-4">
+    <div class="stat-box">
+      <div class="stat-val green">96</div>
+      <div class="stat-label">Ready Now</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val amber">168</div>
+      <div class="stat-label">In Pipeline</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">847</div>
+      <div class="stat-label">Total Stock</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val blue">3</div>
+      <div class="stat-label">Venues</div>
+    </div>
+  </div>
+
+  <!-- Production Call — expandable -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('prod-call')">
+    <div class="dcard-header">
+      <span class="icon">📋</span>
+      <h3>Today's Production Call — Wednesday 8 April</h3>
+      <span class="expand-arrow" id="arrow-prod-call">▼</span>
+    </div>
+    <div style="background:var(--bg-card-alt); border-radius:10px; padding:0.85rem; font-size:0.82rem; line-height:1.8; color:var(--text-sub);">
+      <strong style="color:var(--text);">NY Style</strong> — 12 batches <span style="color:var(--amber);">|</span> 288 balls <span style="color:var(--amber);">|</span> Ready by Saturday<br>
+      <strong style="color:var(--text);">Detroit</strong> — 4 batches <span style="color:var(--amber);">|</span> 64 pans <span style="color:var(--amber);">|</span> Ready by Saturday<br>
+      <strong style="color:var(--text);">Focaccia</strong> — 2 batches <span style="color:var(--amber);">|</span> 16 trays <span style="color:var(--amber);">|</span> Ready by Thursday
+    </div>
+    <div class="dcard-expand" id="expand-prod-call">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--amber);">Per-venue breakdown:</strong><br>
+        <strong style="color:var(--text);">CBD Flagship:</strong> 6× NY (144 balls) + 2× Detroit (32 pans) — covers Fri–Sun service<br>
+        <strong style="color:var(--text);">Southbank:</strong> 4× NY (96 balls) + 1× Focaccia (8 trays) — Sat function booked<br>
+        <strong style="color:var(--text);">West End:</strong> 2× NY (48 balls) + 2× Detroit (32 pans) + 1× Focaccia (8 trays)<br><br>
+        <strong style="color:var(--muted);">Notes:</strong> <em>West End running low on 00 flour — order placed. Southbank function needs 96 balls by 3pm Saturday.</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Venue Snapshot — clickable rows -->
+  <div class="dcard">
+    <div class="dcard-header">
+      <span class="icon">📍</span>
+      <h3>Venue Snapshot</h3>
+    </div>
+    <table class="dtable">
+      <tr><th>Venue</th><th>Stock</th><th>EOD</th><th>Quality</th></tr>
+      <tr class="clickable-row" onclick="showDemo('submit'); demoToast('📍 Viewing CBD Flagship EOD')"><td class="bold">CBD Flagship</td><td>312 balls</td><td style="color:var(--green);">✓ Submitted</td><td style="color:var(--green);">Great</td></tr>
+      <tr class="clickable-row" onclick="demoToast('📍 Southbank — 285 balls, EOD submitted 4:42pm')"><td class="bold">Southbank</td><td>285 balls</td><td style="color:var(--green);">✓ Submitted</td><td style="color:var(--amber);">Good</td></tr>
+      <tr class="clickable-row" onclick="demoToast('⚠️ West End — EOD not yet submitted today')"><td class="bold">West End</td><td>250 balls</td><td style="color:var(--red);">Pending</td><td>—</td></tr>
+    </table>
+  </div>
+
+  <!-- Pipeline Summary — clickable -->
+  <div class="dcard dcard-clickable" onclick="showDemo('pipeline')">
+    <div class="dcard-header">
+      <span class="icon">🧪</span>
+      <h3>Fermentation Pipeline</h3>
+      <span class="badge badge-amber">7 Active</span>
+      <span style="font-size:0.72rem; color:var(--amber); font-weight:700;">View →</span>
+    </div>
+    <div class="pipe-row" style="cursor:default;" onclick="event.stopPropagation()">
+      <div class="pipe-dot ready"></div>
+      <div class="pipe-info"><div class="pipe-name">NY #B-0406-09 + #B-0406-10</div><div class="pipe-meta">96 balls · 72h cold proof complete</div></div>
+      <div class="pipe-time" style="color:var(--green);">✓ Ready</div>
+    </div>
+    <div class="pipe-row" style="cursor:default;" onclick="event.stopPropagation()">
+      <div class="pipe-dot proof"></div>
+      <div class="pipe-info"><div class="pipe-name">NY #B-0407-12</div><div class="pipe-meta">48 balls · Cold proof — next ready</div></div>
+      <div class="pipe-time" id="pipe-countdown">2h 14m</div>
+    </div>
+    <div class="pipe-row" style="cursor:default;" onclick="event.stopPropagation()">
+      <div class="pipe-dot bulk"></div>
+      <div class="pipe-info"><div class="pipe-name">2 batches</div><div class="pipe-meta">Bulk fermenting</div></div>
+      <div class="pipe-time">4–6h</div>
+    </div>
+    <div class="pipe-row" style="cursor:default;" onclick="event.stopPropagation()">
+      <div class="pipe-dot mixing"></div>
+      <div class="pipe-info"><div class="pipe-name">2 batches</div><div class="pipe-meta">Mixing / Autolyse</div></div>
+      <div class="pipe-time" style="color:var(--blue);">In progress</div>
+    </div>
+  </div>
+
+  <!-- Alerts — expandable -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('alerts')">
+    <div class="dcard-header">
+      <span class="icon">🔔</span>
+      <h3>Active Alerts</h3>
+      <span class="badge badge-red">2 New</span>
+      <span class="expand-arrow" id="arrow-alerts">▼</span>
+    </div>
+    <div class="alert-row critical">
+      <div class="alert-icon">🔴</div>
+      <div><div class="alert-text"><strong>West End</strong> hasn't submitted their EOD count yet.</div><div class="alert-time">15 minutes ago</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-alerts">
+      <div class="alert-row">
+        <div class="alert-icon">🟡</div>
+        <div><div class="alert-text"><strong>Batch #B-0407-05</strong> cold proof temp is 5.2°C — above 4°C target.</div><div class="alert-time">43 minutes ago</div></div>
+      </div>
+      <div class="alert-row">
+        <div class="alert-icon">🟢</div>
+        <div><div class="alert-text"><strong>Sofia</strong> completed training module: Cold Fermentation Protocol</div><div class="alert-time">2 hours ago</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather — expandable -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('weather')">
+    <div class="dcard-header">
+      <span class="icon">🌡️</span>
+      <h3>Weather Adjustment</h3>
+      <span class="badge badge-green">Applied</span>
+      <span class="expand-arrow" id="arrow-weather">▼</span>
+    </div>
+    <div style="font-size:0.82rem; color:var(--text-sub);">
+      <strong style="color:var(--text);">Brisbane — 31°C, 78% humidity</strong> · Ice: <strong style="color:var(--amber);">+180g</strong> per batch
+    </div>
+    <div class="dcard-expand" id="expand-weather">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        Water temp reduced by <strong style="color:var(--amber);">2°C</strong> to compensate for ambient heat<br>
+        Target final dough temp: <strong style="color:var(--text);">24°C</strong> · Actual avg today: <strong style="color:var(--green);">24.1°C</strong><br>
+        <span style="color:var(--muted);">Auto-adjusted every 3h based on BOM weather data for Brisbane CBD</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── SUBMIT EOD ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-submit" class="demo-screen">
+  <div class="dcard">
+    <div class="dcard-header">
+      <span class="icon">📊</span>
+      <h3>End-of-Day Count — CBD Flagship</h3>
+      <span class="badge badge-green">Wed 8 Apr</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem;">
+      <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Full Trays</label><input class="dinput" value="12" readonly></div>
+      <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Extra Balls</label><input class="dinput" value="6" readonly></div>
+      <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Total Balls</label><input class="dinput" value="312" readonly style="color:var(--amber); font-weight:700;"></div>
+      <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Empty Trays Returned</label><input class="dinput" value="3" readonly></div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:0.85rem; margin-bottom:1rem;">
+      <label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.5rem;">Wastage</label>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.6rem;">
+        <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Balls Wasted</label><input class="dinput" value="7" readonly style="color:var(--red); font-weight:700;"></div>
+        <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Waste %</label><input class="dinput" value="2.2%" readonly style="color:var(--green); font-weight:700;"></div>
+      </div>
+      <div style="margin-bottom:0.5rem;">
+        <label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Waste Reason</label>
+        <div style="display:flex; gap:0.4rem; flex-wrap:wrap;" id="waste-reasons">
+          <span class="q-btn selected" onclick="selectWaste(this)">Over-proofed</span>
+          <span class="q-btn" onclick="selectWaste(this)">Dropped</span>
+          <span class="q-btn" onclick="selectWaste(this)">Wrong weight</span>
+          <span class="q-btn selected" onclick="selectWaste(this)">Torn</span>
+          <span class="q-btn" onclick="selectWaste(this)">Other</span>
+        </div>
+      </div>
+      <div style="font-size:0.68rem; color:var(--text-sub); background:var(--bg-card-alt); border-radius:8px; padding:0.5rem 0.65rem;">Breakdown: 4× over-proofed (NY Style) · 3× torn (Detroit)</div>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.5rem;">Quality Rating</label>
+      <div style="display:flex; gap:0.5rem;" id="quality-btns">
+        <span class="q-btn" onclick="selectQ(this)">Poor</span>
+        <span class="q-btn" onclick="selectQ(this)">OK</span>
+        <span class="q-btn" onclick="selectQ(this)">Good</span>
+        <span class="q-btn selected" onclick="selectQ(this)">Great</span>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Notes</label>
+      <textarea class="dinput" rows="2" style="resize:none;" placeholder="Optional notes...">Dough was perfect today. Ran out of Detroit pans — need to order more.</textarea>
+    </div>
+    <button class="dbtn dbtn-amber" style="width:100%;" onclick="demoToast('✓ EOD count submitted for CBD Flagship — 312 balls'); this.textContent='✓ Submitted'; this.style.background='var(--green)'">Submit EOD Count</button>
+  </div>
+
+  <!-- Inline trial prompt (not a redirect!) -->
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>Stop chasing texts for stock counts.</h4>
+    <p>Every venue submits EOD counts, quality ratings, wastage, and notes — you see it all in one place. Set it up in under 5 minutes.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Try it free for 30 days →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── BATCHES ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-batches" class="demo-screen">
+  <div class="dcard">
+    <div class="dcard-header">
+      <span class="icon">🍕</span>
+      <h3>Batch Log</h3>
+      <span class="badge badge-green">6 Today</span>
+    </div>
+
+    <div class="batch-row" onclick="toggleExpand('batch1')">
+      <div class="batch-id">#B-0408-01</div>
+      <div class="batch-info"><span class="batch-type">NY Style</span> · 48 balls · 63% · 24.1°C</div>
+      <div class="batch-by">Marco</div>
+      <span class="expand-arrow" id="arrow-batch1">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-batch1" style="border-top:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">0.8g</div><div class="stat-label">Yeast</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">20m</div><div class="stat-label">Autolyse</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">270g</div><div class="stat-label">Ball Wt</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.7;">
+        <strong style="color:var(--text);">Method:</strong> Spiral 4+8min · Autolyse 20min · Ball at 270g<br>
+        <strong style="color:var(--text);">Ready:</strong> 11 Apr (72h cold proof) · <strong style="color:var(--text);">Logged:</strong> 6:45am
+      </div>
+    </div>
+
+    <div class="batch-row" onclick="toggleExpand('batch2')">
+      <div class="batch-id">#B-0408-02</div>
+      <div class="batch-info"><span class="batch-type">NY Style</span> · 48 balls · 63% · 23.8°C</div>
+      <div class="batch-by">Marco</div>
+      <span class="expand-arrow" id="arrow-batch2">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-batch2" style="border-top:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">0.8g</div><div class="stat-label">Yeast</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">20m</div><div class="stat-label">Autolyse</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">270g</div><div class="stat-label">Ball Wt</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.7;">
+        <strong style="color:var(--text);">Method:</strong> Spiral 4+8min · Autolyse 20min · Ball at 270g<br>
+        <strong style="color:var(--text);">Ready:</strong> 11 Apr (72h cold proof) · <strong style="color:var(--text);">Logged:</strong> 7:15am
+      </div>
+    </div>
+
+    <div class="batch-row" onclick="toggleExpand('batch3')">
+      <div class="batch-id">#B-0408-03</div>
+      <div class="batch-info"><span class="batch-type" style="color:var(--amber);">Detroit</span> · 16 pans · 70% · 24.5°C</div>
+      <div class="batch-by">Sofia</div>
+      <span class="expand-arrow" id="arrow-batch3">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-batch3" style="border-top:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">1.2g</div><div class="stat-label">Yeast</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">—</div><div class="stat-label">Autolyse</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">Pan</div><div class="stat-label">Format</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.7;">
+        <strong style="color:var(--text);">Method:</strong> Hand mix 6min · Pan proof · 48h cold<br>
+        <strong style="color:var(--text);">Ready:</strong> 10 Apr (48h cold proof) · <strong style="color:var(--text);">Logged:</strong> 8:00am
+      </div>
+    </div>
+
+    <div class="batch-row" onclick="toggleExpand('batch4')">
+      <div class="batch-id">#B-0408-04</div>
+      <div class="batch-info"><span class="batch-type" style="color:var(--blue);">Focaccia</span> · 8 trays · 75% · 23.2°C</div>
+      <div class="batch-by">Marco</div>
+      <span class="expand-arrow" id="arrow-batch4">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-batch4" style="border-top:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">0.5g</div><div class="stat-label">Yeast</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">30m</div><div class="stat-label">Autolyse</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">Tray</div><div class="stat-label">Format</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.7;">
+        <strong style="color:var(--text);">Method:</strong> 75% hydration · 30min autolyse · Fold 3x · 24h proof<br>
+        <strong style="color:var(--text);">Ready:</strong> 9 Apr (24h proof) · <strong style="color:var(--text);">Logged:</strong> 9:20am
+      </div>
+    </div>
+
+    <div class="batch-row" onclick="toggleExpand('batch5')">
+      <div class="batch-id">#B-0407-12</div>
+      <div class="batch-info"><span class="batch-type">NY Style</span> · 48 balls · 63% · 24.0°C</div>
+      <div class="batch-by">Luca</div>
+      <span class="expand-arrow" id="arrow-batch5">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-batch5" style="border-top:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">0.8g</div><div class="stat-label">Yeast</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">20m</div><div class="stat-label">Autolyse</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">270g</div><div class="stat-label">Ball Wt</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.7;">
+        <strong style="color:var(--text);">Method:</strong> Spiral 4+8min · Autolyse 20min · Ball at 270g<br>
+        <strong style="color:var(--text);">Ready:</strong> 10 Apr (72h cold proof) · <strong style="color:var(--text);">Logged:</strong> 2:30pm
+      </div>
+    </div>
+
+    <div class="batch-row" onclick="toggleExpand('batch6')">
+      <div class="batch-id">#B-0407-11</div>
+      <div class="batch-info"><span class="batch-type">NY Style</span> · 48 balls · 63% · 23.9°C</div>
+      <div class="batch-by">Sofia</div>
+      <span class="expand-arrow" id="arrow-batch6">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-batch6" style="border-top:none;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">0.8g</div><div class="stat-label">Yeast</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">20m</div><div class="stat-label">Autolyse</div></div>
+        <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">270g</div><div class="stat-label">Ball Wt</div></div>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-sub); line-height:1.7;">
+        <strong style="color:var(--text);">Method:</strong> Spiral 4+8min · Autolyse 20min · Ball at 270g<br>
+        <strong style="color:var(--text);">Ready:</strong> 10 Apr (72h cold proof) · <strong style="color:var(--text);">Logged:</strong> 3:15pm
+      </div>
+    </div>
+  </div>
+
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>Your chef's method. Enforced on every batch.</h4>
+    <p>Hydration, temps, yeast, method — logged automatically so every batch is made the same way, by anyone, at any venue.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Start your free trial →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── PIPELINE ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-pipeline" class="demo-screen">
+  <!-- Ready counts -->
+  <div class="stat-row" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="stat-box"><div class="stat-val green" style="font-size:1.3rem;">96</div><div class="stat-label">Ready Now</div></div>
+    <div class="stat-box"><div class="stat-val amber" style="font-size:1.3rem;">48</div><div class="stat-label">Next Ready</div></div>
+    <div class="stat-box"><div class="stat-val" style="font-size:1.3rem;" id="pipe-cd-display">2h 14m</div><div class="stat-label">Countdown</div></div>
+  </div>
+
+  <div class="dcard">
+    <div class="dcard-header"><span class="icon">🧪</span><h3>Full Pipeline</h3></div>
+
+    <div class="pipe-row" onclick="togglePipe('p1')"><div class="pipe-dot mixing"></div><div class="pipe-info"><div class="pipe-name">NY #B-0408-01</div><div class="pipe-meta">48 balls · 270g · Marco</div></div><div class="pipe-time" style="color:var(--blue);">Mixing</div></div>
+    <div class="pipe-detail" id="pipe-p1"><strong style="color:var(--text);">Stage:</strong> Spiral mix in progress (4+8 min)<br><strong style="color:var(--text);">Started:</strong> 6:45am · <strong style="color:var(--text);">Next:</strong> Autolyse → Bulk ferment 6h → Ball → Cold proof 72h<br><strong style="color:var(--text);">Ready:</strong> ~Sat 11 Apr 6:45am</div>
+
+    <div class="pipe-row" onclick="togglePipe('p2')"><div class="pipe-dot mixing"></div><div class="pipe-info"><div class="pipe-name">NY #B-0408-02</div><div class="pipe-meta">48 balls · 270g · Marco</div></div><div class="pipe-time" style="color:var(--blue);">Autolyse</div></div>
+    <div class="pipe-detail" id="pipe-p2"><strong style="color:var(--text);">Stage:</strong> Autolyse rest — 14 min remaining<br><strong style="color:var(--text);">Started:</strong> 7:15am · Mix complete · Resting flour + water before adding salt/yeast</div>
+
+    <div class="pipe-row" onclick="togglePipe('p3')"><div class="pipe-dot bulk"></div><div class="pipe-info"><div class="pipe-name">Detroit #B-0408-03</div><div class="pipe-meta">16 pans · Sofia</div></div><div class="pipe-time">4h 20m</div></div>
+    <div class="pipe-detail" id="pipe-p3"><strong style="color:var(--text);">Stage:</strong> Bulk ferment at 22°C<br><strong style="color:var(--text);">Started:</strong> 8:00am · <strong style="color:var(--text);">Target:</strong> 6h total · Pan & cold proof after</div>
+
+    <div class="pipe-row" onclick="togglePipe('p4')"><div class="pipe-dot bulk"></div><div class="pipe-info"><div class="pipe-name">Focaccia #B-0408-04</div><div class="pipe-meta">8 trays · Marco</div></div><div class="pipe-time">2h 10m</div></div>
+    <div class="pipe-detail" id="pipe-p4"><strong style="color:var(--text);">Stage:</strong> Bulk ferment with stretch & fold<br>Fold #2 of 3 done · Next fold at 10:30am</div>
+
+    <div class="pipe-row" onclick="togglePipe('p5')"><div class="pipe-dot proof"></div><div class="pipe-info"><div class="pipe-name">NY #B-0407-12</div><div class="pipe-meta">48 balls · Cold proof @ 3.8°C</div></div><div class="pipe-time" style="color:var(--purple);" id="pipe-cd-row">2h 14m</div></div>
+    <div class="pipe-detail" id="pipe-p5"><strong style="color:var(--text);">Stage:</strong> Cold proof — 70h elapsed of 72h target<br><strong style="color:var(--text);">Fridge temp:</strong> 3.8°C (target 3.5°C ✓)<br><strong style="color:var(--amber);">⏱ Next batch ready — pull at ~12:15pm, temper 2h before service</strong></div>
+
+    <div class="pipe-row" onclick="togglePipe('p6')"><div class="pipe-dot ready"></div><div class="pipe-info"><div class="pipe-name">NY #B-0406-09</div><div class="pipe-meta">48 balls · 72h complete</div></div><div class="pipe-time" style="color:var(--green);">✓ Ready</div></div>
+    <div class="pipe-detail" id="pipe-p6"><strong style="color:var(--green);">Ready to use</strong> — pull and temper to 16°C before stretching<br>Proof time: 72h 40m · Fridge avg: 3.6°C · Quality: optimal window</div>
+
+    <div class="pipe-row" onclick="togglePipe('p7')"><div class="pipe-dot ready"></div><div class="pipe-info"><div class="pipe-name">NY #B-0406-10</div><div class="pipe-meta">48 balls · 72h complete</div></div><div class="pipe-time" style="color:var(--green);">✓ Ready</div></div>
+    <div class="pipe-detail" id="pipe-p7"><strong style="color:var(--green);">Ready to use</strong> — 72h 15m · Fridge avg: 3.5°C<br><strong style="color:var(--amber);">⚠ Use within 8h</strong> — approaching over-proof window</div>
+  </div>
+
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>No more sticky notes on the fridge.</h4>
+    <p>See exactly what's ready, what's proofing, and when the next batch lands — across every venue, in real time. Never over-proof again.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Try it free for 30 days →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── RECIPES ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-recipes" class="demo-screen">
+  <div class="dcard dcard-clickable" onclick="toggleExpand('recipe-ny')">
+    <div class="dcard-header">
+      <span class="icon">📖</span>
+      <h3>NY Style — Master Recipe</h3>
+      <span class="badge badge-green">Active</span>
+      <span class="expand-arrow" id="arrow-recipe-ny">▼</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem;">
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">63%</div><div class="stat-label">Hydration</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">270g</div><div class="stat-label">Ball Wt</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">72h</div><div class="stat-label">Proof</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">20m</div><div class="stat-label">Autolyse</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-recipe-ny">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.9;">
+        <strong style="color:var(--text);">Flour:</strong> Caputo Pizzeria 00 · <strong style="color:var(--text);">Yeast:</strong> 0.08% IDY · <strong style="color:var(--text);">Salt:</strong> 2.8% · <strong style="color:var(--text);">Oil:</strong> 1.5%<br>
+        <strong style="color:var(--text);">Method:</strong> Autolyse 20min → Spiral 4min slow + 8min fast → Bulk 6h @ 22°C → Ball → Cold proof 72h @ 3.5°C<br>
+        <strong style="color:var(--text);">Chef's Note:</strong> <em style="color:var(--amber);">"Pull 2h before service. Temper to 16°C before stretching. Don't skip the autolyse — it makes the difference."</em><br><br>
+        <strong style="color:var(--text);">Batch calc (48 balls):</strong> Flour 7,953g · Water 5,010g · Salt 223g · Yeast 6.4g · Oil 159g · <strong style="color:var(--amber);">Total: 13,351g</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="dcard dcard-clickable" onclick="toggleExpand('recipe-det')">
+    <div class="dcard-header">
+      <span class="icon">📖</span>
+      <h3>Detroit Style</h3>
+      <span class="badge badge-green">Active</span>
+      <span class="expand-arrow" id="arrow-recipe-det">▼</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem;">
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">70%</div><div class="stat-label">Hydration</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">Pan</div><div class="stat-label">Format</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">48h</div><div class="stat-label">Proof</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">0m</div><div class="stat-label">Autolyse</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-recipe-det">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.9;">
+        <strong style="color:var(--text);">Method:</strong> Hand mix 6min → Bulk 4h → Pan → Cold proof 48h @ 3.5°C<br>
+        <strong style="color:var(--text);">Chef's Note:</strong> <em style="color:var(--amber);">"Oil the pans before loading. Push dough to corners after 30min rest in pan."</em>
+      </div>
+    </div>
+  </div>
+
+  <div class="dcard dcard-clickable" onclick="toggleExpand('recipe-foc')">
+    <div class="dcard-header">
+      <span class="icon">📖</span>
+      <h3>Focaccia</h3>
+      <span class="badge badge-green">Active</span>
+      <span class="expand-arrow" id="arrow-recipe-foc">▼</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem;">
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">75%</div><div class="stat-label">Hydration</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">Tray</div><div class="stat-label">Format</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">24h</div><div class="stat-label">Proof</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.1rem;">30m</div><div class="stat-label">Autolyse</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-recipe-foc">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.9;">
+        <strong style="color:var(--text);">Method:</strong> Autolyse 30min → 3 stretch & folds at 30min intervals → Bulk 3h → Tray → Cold proof 24h<br>
+        <strong style="color:var(--text);">Chef's Note:</strong> <em style="color:var(--amber);">"High hydration — don't fight it. Let it spread naturally in the tray."</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipe change request — interactive -->
+  <div class="dcard">
+    <div class="dcard-header">
+      <span class="icon">🔄</span>
+      <h3>Recipe Change Request</h3>
+      <span class="badge badge-amber">1 Pending</span>
+    </div>
+    <div style="background:var(--bg-card-alt); border-radius:10px; padding:0.75rem; font-size:0.78rem; color:var(--text-sub); line-height:1.7;">
+      <strong style="color:var(--text);">Sofia</strong> requested changing <strong style="color:var(--amber);">Detroit hydration</strong> from 70% → 72%<br>
+      <em style="color:var(--muted);">"The 70% is too tight for our Blue Steel pans. 72% gives better spread and crumb."</em><br>
+      <div style="display:flex; gap:0.5rem; margin-top:0.5rem;" id="change-req-btns">
+        <button class="dbtn dbtn-amber" style="padding:0.35rem 0.85rem; font-size:0.72rem;" onclick="this.parentElement.innerHTML='<span style=color:var(--green);font-weight:700>✓ Approved — recipe updated to 72%</span>'; demoToast('✓ Detroit hydration updated to 72%')">Approve</button>
+        <button class="dbtn dbtn-ghost" style="padding:0.35rem 0.85rem; font-size:0.72rem;" onclick="this.parentElement.innerHTML='<span style=color:var(--red);font-weight:700>✗ Rejected</span>'; demoToast('Request rejected')">Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>Your recipe. Locked down. Consistent everywhere.</h4>
+    <p>Your head chef sets the master recipe — every venue follows it exactly. Change requests go through you, not through whispers on the line.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Start your free trial →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── TRAINING ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-training" class="demo-screen">
+
+  <!-- ── VIDEO TRAINING LIBRARY ── -->
+  <div class="dcard">
+    <div class="dcard-header"><span class="icon">🎬</span><h3>Video Training Library</h3><span style="margin-left:auto; font-size:0.65rem; background:var(--green); color:#fff; padding:0.15rem 0.5rem; border-radius:4px; font-weight:700;">5 MODULES</span></div>
+    <p style="font-size:0.78rem; color:var(--text-sub); padding:0 1rem 0.75rem; margin-top:-0.25rem;">Your head chef records technique videos. Every team member watches, practises, and gets signed off — Doughboy tracks it all.</p>
+
+    <!-- Module 1: Dough Mixing -->
+    <div class="train-module" onclick="toggleExpand('vid-mixing')">
+      <div class="train-mod-icon" style="background:linear-gradient(135deg,var(--green),#1a7a4a);">01</div>
+      <div class="train-mod-info">
+        <div class="train-mod-title">Dough Mixing Standards</div>
+        <div class="train-mod-meta">12 min · 4/4 completed · <span style="color:var(--green);">✓ All certified</span></div>
+      </div>
+      <span class="expand-arrow" id="arrow-vid-mixing">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-vid-mixing" style="border-top:none;">
+      <div class="train-vid-wrap">
+        <video class="train-video" controls preload="metadata" playsinline poster="https://assets.mixkit.co/videos/1669/1669-thumb-large.jpg">
+          <source src="https://assets.mixkit.co/videos/1669/1669-720.mp4" type="video/mp4">
+        </video>
+        <div class="train-vid-caption">
+          <strong>Technique:</strong> Flour incorporation, hydration control, gluten window test<br>
+          <span style="color:var(--text-sub);">Recorded by Marco Rossi · 14 Jan 2026 · Watched 47 times</span>
+        </div>
+        <div class="train-vid-checklist">
+          <div class="train-check done">✓ Marco Rossi <span>Certified 18 Jan</span></div>
+          <div class="train-check done">✓ Sofia Bianchi <span>Certified 22 Jan</span></div>
+          <div class="train-check done">✓ Luca Vitale <span>Certified 25 Jan</span></div>
+          <div class="train-check done">✓ Aisha Nguyen <span>Certified 1 Feb</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 2: Pizza Dough Shaping -->
+    <div class="train-module" onclick="toggleExpand('vid-shaping')">
+      <div class="train-mod-icon" style="background:linear-gradient(135deg,var(--amber),#b07c08);">02</div>
+      <div class="train-mod-info">
+        <div class="train-mod-title">Pizza Dough Shaping & Stretching</div>
+        <div class="train-mod-meta">9 min · 3/4 completed · <span style="color:var(--amber);">1 in progress</span></div>
+      </div>
+      <span class="expand-arrow" id="arrow-vid-shaping">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-vid-shaping" style="border-top:none;">
+      <div class="train-vid-wrap">
+        <video class="train-video" controls preload="metadata" playsinline poster="https://assets.mixkit.co/videos/42465/42465-thumb-large.jpg">
+          <source src="https://assets.mixkit.co/videos/42465/42465-720.mp4" type="video/mp4">
+        </video>
+        <div class="train-vid-caption">
+          <strong>Technique:</strong> Hand stretching, edge crimping, even thickness, avoiding tears<br>
+          <span style="color:var(--text-sub);">Recorded by Marco Rossi · 28 Jan 2026 · Watched 38 times</span>
+        </div>
+        <div class="train-vid-checklist">
+          <div class="train-check done">✓ Marco Rossi <span>Certified 28 Jan</span></div>
+          <div class="train-check done">✓ Sofia Bianchi <span>Certified 3 Feb</span></div>
+          <div class="train-check done">✓ Luca Vitale <span>Certified 8 Feb</span></div>
+          <div class="train-check pending">⏳ Aisha Nguyen <span>Started 2 Apr — 60% watched</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 3: Cold Fermentation -->
+    <div class="train-module" onclick="toggleExpand('vid-ferm')">
+      <div class="train-mod-icon" style="background:linear-gradient(135deg,var(--blue),#2563eb);">03</div>
+      <div class="train-mod-info">
+        <div class="train-mod-title">Cold Fermentation Protocol</div>
+        <div class="train-mod-meta">15 min · 3/4 completed · <span style="color:var(--amber);">1 in progress</span></div>
+      </div>
+      <span class="expand-arrow" id="arrow-vid-ferm">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-vid-ferm" style="border-top:none;">
+      <div class="train-vid-wrap">
+        <video class="train-video" controls preload="metadata" playsinline poster="https://assets.mixkit.co/videos/6948/6948-thumb-large.jpg">
+          <source src="https://assets.mixkit.co/videos/6948/6948-720.mp4" type="video/mp4">
+        </video>
+        <div class="train-vid-caption">
+          <strong>Technique:</strong> 24/48/72-hr cold proof schedules, fridge temp zones, dough ball storage<br>
+          <span style="color:var(--text-sub);">Recorded by Marco Rossi · 5 Feb 2026 · Watched 29 times</span>
+        </div>
+        <div class="train-vid-checklist">
+          <div class="train-check done">✓ Marco Rossi <span>Certified 5 Feb</span></div>
+          <div class="train-check done">✓ Sofia Bianchi <span>Certified 12 Feb</span></div>
+          <div class="train-check done">✓ Luca Vitale <span>Certified 19 Feb</span></div>
+          <div class="train-check pending">⏳ Aisha Nguyen <span>Started 28 Mar — 30% watched</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 4: Portioning & Balling -->
+    <div class="train-module" onclick="toggleExpand('vid-portion')">
+      <div class="train-mod-icon" style="background:linear-gradient(135deg,var(--purple),#7c22ce);">04</div>
+      <div class="train-mod-info">
+        <div class="train-mod-title">Portioning & Balling Technique</div>
+        <div class="train-mod-meta">8 min · 1/4 completed · <span style="color:var(--red);">3 not started</span></div>
+      </div>
+      <span class="expand-arrow" id="arrow-vid-portion">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-vid-portion" style="border-top:none;">
+      <div class="train-vid-wrap">
+        <video class="train-video" controls preload="metadata" playsinline poster="https://assets.mixkit.co/videos/50041/50041-thumb-large.jpg">
+          <source src="https://assets.mixkit.co/videos/50041/50041-720.mp4" type="video/mp4">
+        </video>
+        <div class="train-vid-caption">
+          <strong>Technique:</strong> Scale accuracy, tucking method, surface tension, tray spacing<br>
+          <span style="color:var(--text-sub);">Recorded by Marco Rossi · 20 Feb 2026 · Watched 14 times</span>
+        </div>
+        <div class="train-vid-checklist">
+          <div class="train-check done">✓ Marco Rossi <span>Certified 20 Feb</span></div>
+          <div class="train-check pending">⏳ Sofia Bianchi <span>Started 5 Apr — 40% watched</span></div>
+          <div class="train-check not-started">○ Luca Vitale <span>Not started</span></div>
+          <div class="train-check not-started">○ Aisha Nguyen <span>Not started</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 5: Food Safety & HACCP -->
+    <div class="train-module" onclick="toggleExpand('vid-haccp')">
+      <div class="train-mod-icon" style="background:linear-gradient(135deg,var(--red),#a02d14);">05</div>
+      <div class="train-mod-info">
+        <div class="train-mod-title">Food Safety & HACCP</div>
+        <div class="train-mod-meta">18 min · 2/4 completed · <span style="color:var(--amber);">2 in progress</span></div>
+      </div>
+      <span class="expand-arrow" id="arrow-vid-haccp">▼</span>
+    </div>
+    <div class="dcard-expand" id="expand-vid-haccp" style="border-top:none;">
+      <div class="train-vid-wrap">
+        <video class="train-video" controls preload="metadata" playsinline poster="https://assets.mixkit.co/videos/42474/42474-thumb-large.jpg">
+          <source src="https://assets.mixkit.co/videos/42474/42474-720.mp4" type="video/mp4">
+        </video>
+        <div class="train-vid-caption">
+          <strong>Covers:</strong> Allergen handling, temperature danger zones, cleaning schedules, documentation<br>
+          <span style="color:var(--text-sub);">Recorded by Marco Rossi · 1 Mar 2026 · Watched 22 times</span>
+        </div>
+        <div class="train-vid-checklist">
+          <div class="train-check done">✓ Marco Rossi <span>Certified 2 Mar</span></div>
+          <div class="train-check done">✓ Sofia Bianchi <span>Certified 10 Mar</span></div>
+          <div class="train-check pending">⏳ Luca Vitale <span>Started 1 Apr — 75% watched</span></div>
+          <div class="train-check pending">⏳ Aisha Nguyen <span>Started 3 Apr — 20% watched</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TEAM TRAINING PROGRESS ── -->
+  <div class="dcard">
+    <div class="dcard-header"><span class="icon">🎓</span><h3>Team Certification Status</h3></div>
+    <div class="team-row" onclick="toggleExpand('train-marco')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,var(--green),#1a7a4a);">MR</div>
+      <div class="team-info"><div class="team-name">Marco Rossi</div><div class="team-role">Head Chef</div></div>
+      <div style="text-align:right; min-width:80px;"><div style="font-size:0.72rem; font-weight:700; color:var(--green); margin-bottom:0.25rem;">100%</div><div class="prog-track"><div class="prog-fill green" style="width:100%;"></div></div></div>
+    </div>
+    <div class="dcard-expand" id="expand-train-marco" style="border-top:none;"><div style="font-size:0.75rem; color:var(--text-sub); line-height:1.8;">✓ Dough Mixing · ✓ Shaping · ✓ Cold Fermentation · ✓ Portioning · ✓ Food Safety<br><strong style="color:var(--green);">All 5 modules complete</strong> — fully certified 2 Mar 2026</div></div>
+
+    <div class="team-row" onclick="toggleExpand('train-sofia')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,var(--amber),#b07c08);">SB</div>
+      <div class="team-info"><div class="team-name">Sofia Bianchi</div><div class="team-role">Dough Production</div></div>
+      <div style="text-align:right; min-width:80px;"><div style="font-size:0.72rem; font-weight:700; color:var(--amber); margin-bottom:0.25rem;">80%</div><div class="prog-track"><div class="prog-fill amber" style="width:80%;"></div></div></div>
+    </div>
+    <div class="dcard-expand" id="expand-train-sofia" style="border-top:none;"><div style="font-size:0.75rem; color:var(--text-sub); line-height:1.8;">✓ Dough Mixing · ✓ Shaping · ✓ Cold Fermentation · <span style="color:var(--amber);">⏳ Portioning (40%)</span> · ✓ Food Safety<br><strong style="color:var(--amber);">Next up:</strong> Portioning & Balling — due by 12 Apr</div></div>
+
+    <div class="team-row" onclick="toggleExpand('train-luca')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,#6366f1,#4338ca);">LV</div>
+      <div class="team-info"><div class="team-name">Luca Vitale</div><div class="team-role">Pizza Chef</div></div>
+      <div style="text-align:right; min-width:80px;"><div style="font-size:0.72rem; font-weight:700; color:var(--amber); margin-bottom:0.25rem;">60%</div><div class="prog-track"><div class="prog-fill amber" style="width:60%;"></div></div></div>
+    </div>
+    <div class="dcard-expand" id="expand-train-luca" style="border-top:none;"><div style="font-size:0.75rem; color:var(--text-sub); line-height:1.8;">✓ Dough Mixing · ✓ Shaping · ✓ Cold Fermentation · <span style="color:var(--muted);">○ Portioning</span> · <span style="color:var(--amber);">⏳ Food Safety (75%)</span><br><strong style="color:var(--amber);">In progress:</strong> Food Safety module — almost done</div></div>
+
+    <div class="team-row" onclick="toggleExpand('train-aisha')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">AN</div>
+      <div class="team-info"><div class="team-name">Aisha Nguyen</div><div class="team-role">Kitchen Staff</div></div>
+      <div style="text-align:right; min-width:80px;"><div style="font-size:0.72rem; font-weight:700; color:var(--red); margin-bottom:0.25rem;">20%</div><div class="prog-track"><div class="prog-fill amber" style="width:20%;"></div></div></div>
+    </div>
+    <div class="dcard-expand" id="expand-train-aisha" style="border-top:none;"><div style="font-size:0.75rem; color:var(--text-sub); line-height:1.8;">✓ Dough Mixing · <span style="color:var(--amber);">⏳ Shaping (60%)</span> · <span style="color:var(--amber);">⏳ Cold Ferm (30%)</span> · ○ Portioning · <span style="color:var(--amber);">⏳ Food Safety (20%)</span><br><strong style="color:var(--red);">Needs attention</strong> — no progress in 6 days. <span style="cursor:pointer; color:var(--amber); text-decoration:underline;" onclick="event.stopPropagation(); demoToast('Nudge sent to Aisha!');">Send nudge</span></div></div>
+  </div>
+
+  <!-- ── TRAINING STATS ── -->
+  <div class="dcard">
+    <div class="dcard-header"><span class="icon">📊</span><h3>Training Analytics</h3></div>
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:0.75rem; padding:0 1rem 1rem;">
+      <div style="background:var(--bg-card-alt); border-radius:10px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.4rem; font-weight:900; color:var(--green);">65%</div>
+        <div style="font-size:0.65rem; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.5px;">Team Certified</div>
+      </div>
+      <div style="background:var(--bg-card-alt); border-radius:10px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.4rem; font-weight:900; color:var(--amber);">150</div>
+        <div style="font-size:0.65rem; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.5px;">Videos Watched</div>
+      </div>
+      <div style="background:var(--bg-card-alt); border-radius:10px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.4rem; font-weight:900; color:var(--blue);">13</div>
+        <div style="font-size:0.65rem; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.5px;">Certifications</div>
+      </div>
+      <div style="background:var(--bg-card-alt); border-radius:10px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.4rem; font-weight:900; color:var(--purple);">4.8</div>
+        <div style="font-size:0.65rem; color:var(--text-sub); text-transform:uppercase; letter-spacing:0.5px;">Avg Quiz Score</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>New hire? Trained on day one. No shadowing required.</h4>
+    <p>Your head chef records the technique once. Every new starter watches, practises, and gets signed off — you see who's certified and who needs a nudge.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Start your free trial →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── TEAM ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-team" class="demo-screen">
+  <div class="dcard">
+    <div class="dcard-header"><span class="icon">👥</span><h3>Team Members</h3><span class="badge badge-green">4 Active</span></div>
+    <div class="team-row" onclick="toggleTeam('tm1')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,var(--green),#1a7a4a);">MR</div>
+      <div class="team-info"><div class="team-name">Marco Rossi</div><div class="team-role">Head Chef · CBD Flagship</div></div>
+      <div class="team-status" style="color:var(--green);">Active</div>
+    </div>
+    <div class="team-detail" id="tm1"><strong style="color:var(--text);">Joined:</strong> 15 Jan 2026 · <strong style="color:var(--text);">Batches logged:</strong> 247 · <strong style="color:var(--text);">Training:</strong> 100% complete<br><strong style="color:var(--text);">Venues:</strong> CBD Flagship (primary), Southbank (backup)<br><strong style="color:var(--muted);">Last active:</strong> 12 minutes ago</div>
+
+    <div class="team-row" onclick="toggleTeam('tm2')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,var(--amber),#b07c08);">SB</div>
+      <div class="team-info"><div class="team-name">Sofia Bianchi</div><div class="team-role">Dough Production · Southbank</div></div>
+      <div class="team-status" style="color:var(--green);">Active</div>
+    </div>
+    <div class="team-detail" id="tm2"><strong style="color:var(--text);">Joined:</strong> 3 Feb 2026 · <strong style="color:var(--text);">Batches:</strong> 164 · <strong style="color:var(--text);">Training:</strong> 75%<br><strong style="color:var(--text);">Venue:</strong> Southbank<br><strong style="color:var(--muted);">Last active:</strong> 1 hour ago</div>
+
+    <div class="team-row" onclick="toggleTeam('tm3')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,#6366f1,#4338ca);">LV</div>
+      <div class="team-info"><div class="team-name">Luca Vitale</div><div class="team-role">Pizza Chef · West End</div></div>
+      <div class="team-status" style="color:var(--green);">Active</div>
+    </div>
+    <div class="team-detail" id="tm3"><strong style="color:var(--text);">Joined:</strong> 20 Feb 2026 · <strong style="color:var(--text);">Batches:</strong> 89 · <strong style="color:var(--text);">Training:</strong> 50%<br><strong style="color:var(--text);">Venue:</strong> West End</div>
+
+    <div class="team-row" onclick="toggleTeam('tm4')">
+      <div class="team-avatar" style="background:linear-gradient(135deg,#ec4899,#be185d);">AN</div>
+      <div class="team-info"><div class="team-name">Aisha Nguyen</div><div class="team-role">Kitchen Staff · CBD Flagship</div></div>
+      <div class="team-status" style="color:var(--amber);">Training</div>
+    </div>
+    <div class="team-detail" id="tm4"><strong style="color:var(--text);">Joined:</strong> 28 Mar 2026 · <strong style="color:var(--text);">Batches:</strong> 12 · <strong style="color:var(--text);">Training:</strong> 25%<br><strong style="color:var(--text);">Venue:</strong> CBD Flagship · <strong style="color:var(--amber);">New hire — onboarding</strong></div>
+  </div>
+
+  <div class="dcard dcard-clickable" onclick="toggleExpand('perms')">
+    <div class="dcard-header"><span class="icon">🔐</span><h3>Role Permissions</h3><span class="expand-arrow" id="arrow-perms">▼</span></div>
+    <div style="font-size:0.78rem; color:var(--text-sub);">5 roles + Driver View · Owner has full access + billing · Any staff can toggle Driver View for deliveries</div>
+    <div class="dcard-expand" id="expand-perms">
+      <table class="dtable" style="margin-top:0.5rem;">
+        <tr><th>Role</th><th>Recipes</th><th>Batches</th><th>Pipeline</th><th>Training</th><th>Tools</th><th>Admin</th><th>Billing</th></tr>
+        <tr><td class="bold" style="color:var(--amber);">Owner</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td></tr>
+        <tr><td class="bold">Exec Chef</td><td style="color:var(--green);">Edit</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">Manage</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--red);">✗</td></tr>
+        <tr><td class="bold">Head Chef</td><td style="color:var(--green);">Edit</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">Manage</td><td style="color:var(--amber);">View</td><td style="color:var(--red);">✗</td><td style="color:var(--red);">✗</td></tr>
+        <tr><td class="bold">Pizza Chef</td><td style="color:var(--amber);">View</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--green);">✓</td><td style="color:var(--red);">✗</td><td style="color:var(--red);">✗</td><td style="color:var(--red);">✗</td></tr>
+        <tr><td class="bold">Kitchen Staff</td><td style="color:var(--amber);">View</td><td style="color:var(--amber);">EOD</td><td style="color:var(--amber);">View</td><td style="color:var(--green);">✓</td><td style="color:var(--red);">✗</td><td style="color:var(--red);">✗</td><td style="color:var(--red);">✗</td></tr>
+        <tr style="border-top:2px solid var(--border);"><td class="bold" style="color:var(--amber);">Driver View</td><td colspan="7" style="color:var(--text-sub); font-size:0.72rem;">Toggle for any role — shows tray counts, dough drop schedule & delivery confirmations only</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>Scale your team without losing quality.</h4>
+    <p>Add venues, add staff, set permissions — everyone sees exactly what they need. From owner to kitchen hand to driver.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Start your free trial →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- ── TOOLS ── -->
+<!-- ════════════════════════════════════════════ -->
+<div id="demo-tools" class="demo-screen">
+  <div class="dcard dcard-clickable" onclick="toggleExpand('calc')">
+    <div class="dcard-header"><span class="icon">🧮</span><h3>Dough Calculator</h3><span class="expand-arrow" id="arrow-calc">▼</span></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+      <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Ball Weight</label><input class="dinput" value="270g" readonly></div>
+      <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Batch Size</label><input class="dinput" value="48 balls" readonly></div>
+    </div>
+    <div class="dcard-expand" id="expand-calc">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+        <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Hydration</label><input class="dinput" value="63%" readonly></div>
+        <div><label style="font-size:0.65rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:0.3rem;">Dough Type</label><input class="dinput" value="NY Style" readonly></div>
+      </div>
+      <div style="background:var(--amber-glow); border:1px solid rgba(200,150,10,0.2); border-radius:10px; padding:0.85rem;">
+        <div style="font-size:0.65rem; color:var(--amber); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.5rem;">Calculated Ingredients</div>
+        <div style="font-size:0.82rem; line-height:2; color:var(--text-sub);">
+          <strong style="color:var(--text);">Flour:</strong> 7,953g · <strong style="color:var(--text);">Water:</strong> 5,010g · <strong style="color:var(--text);">Salt:</strong> 223g<br>
+          <strong style="color:var(--text);">Yeast:</strong> 6.4g · <strong style="color:var(--text);">Oil:</strong> 159g · <strong style="color:var(--amber);">Total: 13,351g</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dcard dcard-clickable" onclick="toggleExpand('cost')">
+    <div class="dcard-header"><span class="icon">💰</span><h3>Cost per Ball</h3><span class="expand-arrow" id="arrow-cost">▼</span></div>
+    <div class="stat-row" style="grid-template-columns:1fr 1fr; margin-bottom:0;">
+      <div class="stat-box"><div class="stat-val amber" style="font-size:1.3rem;">$0.42</div><div class="stat-label">Ingredients</div></div>
+      <div class="stat-box"><div class="stat-val green" style="font-size:1.3rem;">$0.85</div><div class="stat-label">Total (+ labour)</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-cost">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--text);">Flour:</strong> $0.22 · <strong style="color:var(--text);">Water:</strong> $0.01 · <strong style="color:var(--text);">Yeast:</strong> $0.03 · <strong style="color:var(--text);">Salt:</strong> $0.02 · <strong style="color:var(--text);">Oil:</strong> $0.14<br>
+        <strong style="color:var(--text);">Labour:</strong> $0.43 (based on $32/hr, 74 balls/hr)<br>
+        <span style="color:var(--muted);">Updated from ingredient prices set in Admin</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dcard dcard-clickable" onclick="toggleExpand('ice')">
+    <div class="dcard-header"><span class="icon">🧊</span><h3>Ice Calculator</h3><span class="expand-arrow" id="arrow-ice">▼</span></div>
+    <div style="font-size:0.92rem; color:var(--amber); font-weight:700;">Replace 180g water with ice per batch</div>
+    <div class="dcard-expand" id="expand-ice">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--text);">Ambient:</strong> 31°C · <strong style="color:var(--text);">Target final:</strong> 24°C · <strong style="color:var(--text);">Tap water:</strong> 22°C<br>
+        Substituting 180g of the total water weight with crushed ice to compensate for ambient heat.<br>
+        <span style="color:var(--muted);">Recalculates automatically when weather conditions change.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EXEC TOOLS ══ -->
+  <div style="padding:0.5rem 0; margin-top:0.25rem;">
+    <div style="font-size:0.6rem; font-weight:900; color:var(--amber); text-transform:uppercase; letter-spacing:2px; padding:0 0.25rem; margin-bottom:0.5rem;">Executive Dashboard</div>
+  </div>
+
+  <!-- Margin Analysis -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('margin')">
+    <div class="dcard-header"><span class="icon">📈</span><h3>Margin Analysis</h3><span class="badge badge-green">Healthy</span><span class="expand-arrow" id="arrow-margin">▼</span></div>
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr); margin-bottom:0;">
+      <div class="stat-box"><div class="stat-val green" style="font-size:1.2rem;">82%</div><div class="stat-label">Avg Margin</div></div>
+      <div class="stat-box"><div class="stat-val amber" style="font-size:1.2rem;">$0.85</div><div class="stat-label">Cost/Ball</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.2rem;">$4.80</div><div class="stat-label">Revenue/Ball</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-margin">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--text);">By dough type:</strong><br>
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>NY Style</span><span style="color:var(--green); font-weight:700;">84% margin</span><span>$0.82 cost → $5.20 avg sale</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>Detroit</span><span style="color:var(--green); font-weight:700;">79% margin</span><span>$1.10 cost → $5.40 avg sale</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0;"><span>Focaccia</span><span style="color:var(--amber); font-weight:700;">76% margin</span><span>$0.95 cost → $3.90 avg sale</span></div>
+        <br><span style="color:var(--muted);">Margin = (revenue - dough cost) / revenue. Excludes toppings & overheads.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waste Tracker -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('waste')">
+    <div class="dcard-header"><span class="icon">🗑️</span><h3>Waste Tracker</h3><span class="badge badge-amber">3.2%</span><span class="expand-arrow" id="arrow-waste">▼</span></div>
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr); margin-bottom:0;">
+      <div class="stat-box"><div class="stat-val green" style="font-size:1.2rem;">3.2%</div><div class="stat-label">This Week</div></div>
+      <div class="stat-box"><div class="stat-val amber" style="font-size:1.2rem;">4.1%</div><div class="stat-label">Last Week</div></div>
+      <div class="stat-box"><div class="stat-val" style="font-size:1.2rem;">$127</div><div class="stat-label">Saved vs Avg</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-waste">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--text);">Waste by venue (7 days):</strong><br>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; border-bottom:1px solid var(--border);"><span>CBD Flagship</span><div style="flex:1; margin:0 0.75rem;"><div class="prog-track"><div class="prog-fill green" style="width:22%;"></div></div></div><span style="color:var(--green); font-weight:700;">2.2%</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; border-bottom:1px solid var(--border);"><span>Southbank</span><div style="flex:1; margin:0 0.75rem;"><div class="prog-track"><div class="prog-fill amber" style="width:38%;"></div></div></div><span style="color:var(--amber); font-weight:700;">3.8%</span></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0;"><span>West End</span><div style="flex:1; margin:0 0.75rem;"><div class="prog-track"><div class="prog-fill amber" style="width:41%;"></div></div></div><span style="color:var(--amber); font-weight:700;">4.1%</span></div>
+        <br><strong style="color:var(--text);">Top waste reasons:</strong> Over-proofed (41%) · Dropped (28%) · Wrong weight (18%) · Other (13%)<br>
+        <span style="color:var(--green);">↓ 0.9% improvement</span> from last week. Target: under 3%.
+      </div>
+    </div>
+  </div>
+
+  <!-- Venue Comparison -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('venue-comp')">
+    <div class="dcard-header"><span class="icon">🏪</span><h3>Venue Comparison</h3><span class="expand-arrow" id="arrow-venue-comp">▼</span></div>
+    <div style="overflow-x:auto;">
+      <table class="dtable" style="font-size:0.72rem;">
+        <tr><th></th><th>Output</th><th>Waste</th><th>EOD Rate</th><th>Training</th></tr>
+        <tr onclick="demoToast('CBD Flagship — top performer this week')" style="cursor:pointer;"><td class="bold">CBD Flagship</td><td>312 balls</td><td style="color:var(--green);">2.2%</td><td style="color:var(--green);">100%</td><td style="color:var(--green);">92%</td></tr>
+        <tr onclick="demoToast('Southbank — Sat function prep boosted output')" style="cursor:pointer;"><td class="bold">Southbank</td><td>285 balls</td><td style="color:var(--amber);">3.8%</td><td style="color:var(--green);">96%</td><td style="color:var(--amber);">78%</td></tr>
+        <tr onclick="demoToast('West End — EOD compliance needs attention')" style="cursor:pointer;"><td class="bold">West End</td><td>250 balls</td><td style="color:var(--amber);">4.1%</td><td style="color:var(--red);">71%</td><td style="color:var(--amber);">65%</td></tr>
+      </table>
+    </div>
+    <div class="dcard-expand" id="expand-venue-comp">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--green);">🏆 CBD Flagship</strong> leads on all metrics this week.<br>
+        <strong style="color:var(--red);">⚠ West End</strong> — EOD submission rate dropped below 75%. 2 missed submissions this week.<br>
+        <strong style="color:var(--amber);">📋 Southbank</strong> — waste trending up since new hire started. Recommend training review.<br>
+        <br><span style="color:var(--muted);">Data from last 7 days. Tap venue for details.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly P&L Summary -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('pnl')">
+    <div class="dcard-header"><span class="icon">💵</span><h3>Weekly P&L Summary</h3><span class="badge badge-green">+12%</span><span class="expand-arrow" id="arrow-pnl">▼</span></div>
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr); margin-bottom:0;">
+      <div class="stat-box"><div class="stat-val green" style="font-size:1.2rem;">$4,068</div><div class="stat-label">Revenue</div></div>
+      <div class="stat-box"><div class="stat-val amber" style="font-size:1.2rem;">$721</div><div class="stat-label">Dough Cost</div></div>
+      <div class="stat-box"><div class="stat-val green" style="font-size:1.2rem;">$3,347</div><div class="stat-label">Gross Profit</div></div>
+    </div>
+    <div class="dcard-expand" id="expand-pnl">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--text);">Revenue breakdown:</strong><br>
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>NY Style (640 sold)</span><span style="font-weight:700;">$3,328</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>Detroit (72 sold)</span><span style="font-weight:700;">$389</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid var(--border);"><span>Focaccia (90 sold)</span><span style="font-weight:700;">$351</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.4rem 0; border-top:2px solid var(--amber);"><strong style="color:var(--text);">Dough cost total</strong><span style="font-weight:700; color:var(--amber);">$721</span></div>
+        <br><span style="color:var(--green);">↑ 12% vs last week.</span> Driven by Saturday function at Southbank (+96 NY balls).<br>
+        <span style="color:var(--muted);">Dough costs only. Toppings, overheads & labour tracked in your POS integration.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inventory Alerts -->
+  <div class="dcard dcard-clickable" onclick="toggleExpand('inv')">
+    <div class="dcard-header"><span class="icon">📦</span><h3>Inventory Alerts</h3><span class="badge badge-red">2 Low</span><span class="expand-arrow" id="arrow-inv">▼</span></div>
+    <div style="padding:0 0 0.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border); font-size:0.82rem;">
+        <span><strong style="color:var(--red);">00 Flour</strong> — West End</span><span style="color:var(--red); font-weight:700;">2 days left</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border); font-size:0.82rem;">
+        <span><strong style="color:var(--amber);">Olive Oil</strong> — Southbank</span><span style="color:var(--amber); font-weight:700;">5 days left</span>
+      </div>
+    </div>
+    <div class="dcard-expand" id="expand-inv">
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.8;">
+        <strong style="color:var(--text);">All ingredients (days until reorder):</strong><br>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0;"><span>00 Flour (CBD)</span><span style="color:var(--green);">14 days</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0;"><span>00 Flour (Southbank)</span><span style="color:var(--green);">11 days</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0; color:var(--red); font-weight:700;"><span>00 Flour (West End)</span><span>2 days ⚠</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0;"><span>Yeast (all venues)</span><span style="color:var(--green);">18 days</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0;"><span>Olive Oil (CBD)</span><span style="color:var(--green);">9 days</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0; color:var(--amber); font-weight:700;"><span>Olive Oil (Southbank)</span><span>5 days</span></div>
+        <div style="display:flex; justify-content:space-between; padding:0.25rem 0;"><span>Salt (all venues)</span><span style="color:var(--green);">30+ days</span></div>
+        <br><span style="color:var(--muted);">Auto-calculated from usage rates + current stock. Reorder alerts sent to Slack.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="trial-prompt">
+    <button class="trial-dismiss" onclick="dismissPrompt(this)">✕</button>
+    <h4>Know your numbers without a spreadsheet.</h4>
+    <p>Margins, waste %, venue comparisons, weekly P&L — all calculated automatically from your daily production. The numbers your business partner or investor actually wants to see.</p>
+    <button class="trial-btn" onclick="window.location.href='/?open=trial'">Start your free trial →</button>
+    <button class="trial-skip" onclick="dismissPrompt(this)">Keep exploring the demo</button>
+  </div>
+</div>
+
+<!-- ── MOBILE NAV ── -->
+<div class="demo-mnav">
+  <button class="demo-mnav-btn active" onclick="showDemo('dashboard')"><span class="ico">📊</span>Dashboard</button>
+  <button class="demo-mnav-btn" onclick="showDemo('submit')"><span class="ico">📋</span>EOD</button>
+  <button class="demo-mnav-btn" onclick="showDemo('batches')"><span class="ico">🍕</span>Batches</button>
+  <button class="demo-mnav-btn" onclick="showDemo('recipes')"><span class="ico">📖</span>Recipes</button>
+  <button class="demo-mnav-btn" onclick="showDemo('training')"><span class="ico">🎓</span>Training</button>
+  <button class="demo-mnav-btn" onclick="showDemo('tools')"><span class="ico">🧮</span>Tools</button>
+</div>
+
+<!-- ── BOTTOM CTA BAR ── -->
+<div class="demo-cta-bar">
+  <div class="msg">This is a demo. <em>Start your 30-day free trial</em> to use it with your kitchen.</div>
+  <button class="cta-btn" onclick="window.location.href='/?open=trial'">Start Free Trial →</button>
+</div>
+
+<script>
+  // ── Tab switching ──
+  function showDemo(name) {
+    document.querySelectorAll('.demo-screen').forEach(function(s) { s.classList.remove('active'); });
+    document.querySelectorAll('.demo-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.demo-mnav-btn').forEach(function(b) { b.classList.remove('active'); });
+    var screen = document.getElementById('demo-' + name);
+    if (screen) screen.classList.add('active');
+    var tabMap = { dashboard:'Dashboard', submit:'Submit EOD', batches:'Batch Log', pipeline:'Pipeline', recipes:'Recipes', training:'Training', team:'Team', tools:'Tools' };
+    document.querySelectorAll('.demo-tab').forEach(function(t) {
+      if (t.textContent === tabMap[name]) t.classList.add('active');
+    });
+    var mnavMap = { dashboard:0, submit:1, batches:2, recipes:3, training:4, tools:5 };
+    var btns = document.querySelectorAll('.demo-mnav-btn');
+    if (mnavMap[name] !== undefined && btns[mnavMap[name]]) btns[mnavMap[name]].classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Expand/collapse cards ──
+  function toggleExpand(id) {
+    var el = document.getElementById('expand-' + id);
+    var arrow = document.getElementById('arrow-' + id);
+    if (!el) return;
+    var isOpening = !el.classList.contains('open');
+    el.classList.toggle('open');
+    if (arrow) arrow.classList.toggle('open');
+    // Auto-play/pause video in training modules
+    var vid = el.querySelector('.train-video');
+    if (vid) {
+      if (isOpening) { vid.play(); } else { vid.pause(); }
+    }
+  }
+
+  // ── Pipeline row expand ──
+  function togglePipe(id) {
+    var el = document.getElementById('pipe-' + id);
+    if (!el) return;
+    el.classList.toggle('open');
+  }
+
+  // ── Team member expand ──
+  function toggleTeam(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('open');
+  }
+
+  // ── Quality button select ──
+  function selectQ(el) {
+    document.querySelectorAll('#quality-btns .q-btn').forEach(function(b) { b.classList.remove('selected'); });
+    el.classList.add('selected');
+    demoToast('Quality: ' + el.textContent);
+  }
+  function selectWaste(el) {
+    el.classList.toggle('selected');
+    var reasons = [];
+    document.querySelectorAll('#waste-reasons .q-btn.selected').forEach(function(b) { reasons.push(b.textContent); });
+    demoToast('Waste reasons: ' + (reasons.length ? reasons.join(', ') : 'None'));
+  }
+
+  // ── Dismiss trial prompt ──
+  function dismissPrompt(el) {
+    var prompt = el.closest('.trial-prompt');
+    prompt.style.transition = 'opacity 0.3s, transform 0.3s';
+    prompt.style.opacity = '0';
+    prompt.style.transform = 'translateY(-8px)';
+    setTimeout(function() { prompt.style.display = 'none'; }, 300);
+  }
+
+  // ── Toast notifications ──
+  var _toastTimer;
+  function demoToast(msg) {
+    var t = document.getElementById('demo-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function() { t.classList.remove('show'); }, 3000);
+  }
+
+  // ── Live countdown timer ──
+  var _cdSeconds = 2 * 3600 + 14 * 60 + 37; // 2h 14m 37s
+  function tickCountdown() {
+    _cdSeconds--;
+    if (_cdSeconds < 0) _cdSeconds = 0;
+    var h = Math.floor(_cdSeconds / 3600);
+    var m = Math.floor((_cdSeconds % 3600) / 60);
+    var s = _cdSeconds % 60;
+    var hEl = document.getElementById('cd-h');
+    var mEl = document.getElementById('cd-m');
+    var sEl = document.getElementById('cd-s');
+    if (hEl) hEl.textContent = String(h).padStart(2, '0');
+    if (mEl) mEl.textContent = String(m).padStart(2, '0');
+    if (sEl) sEl.textContent = String(s).padStart(2, '0');
+    // Also update the pipeline displays
+    var pipeCD = document.getElementById('pipe-countdown');
+    var pipeCDDisplay = document.getElementById('pipe-cd-display');
+    var pipeCDRow = document.getElementById('pipe-cd-row');
+    var label = h + 'h ' + String(m).padStart(2, '0') + 'm';
+    if (pipeCD) pipeCD.textContent = label;
+    if (pipeCDDisplay) pipeCDDisplay.textContent = label;
+    if (pipeCDRow) pipeCDRow.textContent = label;
+  }
+  setInterval(tickCountdown, 1000);
+</script>
+
+</body>
+</html>

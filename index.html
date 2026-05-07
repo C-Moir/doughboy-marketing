@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doughboy — Pizza Production Intelligence</title>
+  <style>
+    :root {
+      --dark:     #1C0F07;
+      --amber:    #C8960A;
+      --amber-lt: #FEF3DC;
+      --cream:    #FFF5E8;
+      --red:      #C43518;
+      --green:    #2D6544;
+      --muted:    #8C7860;
+      --border:   #EDE0CC;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fff; color: var(--dark); line-height: 1.5; font-size: 15px; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--dark); color: #fff;
+      padding: 0 2.5rem; height: 60px;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .nav-logo { font-size: 1.15rem; font-weight: 900; letter-spacing: -0.5px; }
+    .nav-logo em { font-style: normal; color: var(--amber); }
+    .nav-links { display: flex; gap: 2rem; margin-left: auto; font-size: 0.84rem; }
+    .nav-links a { color: rgba(255,255,255,0.55); transition: color 0.15s; font-weight: 500; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta {
+      background: var(--amber); color: var(--dark); font-weight: 800;
+      padding: 0.45rem 1.2rem; border-radius: 8px; font-size: 0.84rem;
+      margin-left: 1.5rem; white-space: nowrap; transition: background 0.15s;
+    }
+    .nav-cta:hover { background: #dda80c; }
+
+    /* HERO */
+    .hero {
+      background: var(--dark); color: #fff;
+      padding: 7rem 2rem 6rem;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 30% 60%, rgba(200,150,10,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 30%, rgba(200,150,10,0.07) 0%, transparent 50%);
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(200,150,10,0.12); border: 1px solid rgba(200,150,10,0.25);
+      color: var(--amber); font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 0.3rem 0.9rem; border-radius: 20px; margin-bottom: 1.75rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6.5vw, 4.4rem); font-weight: 900;
+      letter-spacing: -2.5px; line-height: 1.02;
+      max-width: 820px; margin: 0 auto 1.6rem;
+    }
+    .hero h1 em { font-style: normal; color: var(--amber); }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem); color: rgba(255,255,255,0.55);
+      max-width: 560px; margin: 0 auto 2.75rem; line-height: 1.7;
+    }
+    .hero-actions { display: flex; gap: 0.85rem; justify-content: center; flex-wrap: wrap; }
+    .btn-hero {
+      background: var(--amber); color: var(--dark); font-weight: 900;
+      font-size: 1rem; padding: 0.9rem 2.25rem; border-radius: 10px;
+      border: none; cursor: pointer; font-family: inherit;
+      transition: transform 0.1s, background 0.15s; letter-spacing: -0.2px;
+    }
+    .btn-hero:hover { background: #dda80c; transform: translateY(-1px); }
+    .btn-ghost-hero {
+      background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85);
+      font-weight: 600; font-size: 1rem; padding: 0.9rem 2rem; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12); cursor: pointer; font-family: inherit;
+      transition: background 0.15s;
+    }
+    .btn-ghost-hero:hover { background: rgba(255,255,255,0.12); }
+    .hero-trust {
+      margin-top: 1.75rem;
+      display: flex; align-items: center; justify-content: center; gap: 1.5rem;
+      flex-wrap: wrap; font-size: 0.78rem; color: rgba(255,255,255,0.3);
+    }
+    .hero-trust span::before { content: '✓ '; color: var(--amber); font-weight: 700; }
+
+    /* METRICS STRIP */
+    .metrics-strip {
+      background: var(--cream); border-bottom: 1px solid var(--border);
+      padding: 1.75rem 2rem;
+    }
+    .metrics-inner {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+    }
+    .metric { text-align: center; }
+    .metric-val { font-size: 2rem; font-weight: 900; letter-spacing: -1px; color: var(--dark); line-height: 1; }
+    .metric-val em { font-style: normal; color: var(--amber); }
+    .metric-label { font-size: 0.74rem; color: var(--muted); margin-top: 0.3rem; line-height: 1.4; }
+
+    /* SHARED */
+    section { padding: 5.5rem 2rem; }
+    .container { max-width: 1080px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--amber); margin-bottom: 0.6rem;
+    }
+    .section-h2 {
+      font-size: clamp(1.7rem, 4vw, 2.6rem); font-weight: 900;
+      letter-spacing: -1.2px; line-height: 1.08; margin-bottom: 0.85rem;
+    }
+    .section-sub {
+      font-size: 1rem; color: var(--muted); max-width: 540px;
+      line-height: 1.7; margin-bottom: 3rem;
+    }
+
+    /* PROBLEM */
+    .problem { background: #fff; }
+    .problem-intro {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; margin-bottom: 4rem;
+    }
+    .problem-quote {
+      font-size: clamp(1.2rem, 2.5vw, 1.55rem); font-weight: 800; line-height: 1.4;
+      letter-spacing: -0.5px; border-left: 4px solid var(--amber); padding-left: 1.5rem;
+      color: var(--dark);
+    }
+    .problem-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .problem-card {
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.4rem;
+    }
+    .problem-card .p-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .problem-card h4 { font-size: 0.9rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .problem-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+
+    /* DOUGH TYPES */
+    .dough-types { background: var(--dark); color: #fff; }
+    .dough-types .section-sub { color: rgba(255,255,255,0.45); max-width: 600px; }
+    .dough-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden; margin-bottom: 2.5rem; }
+    .dough-card { background: var(--dark); padding: 1.75rem; }
+    .dough-tag {
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px;
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; margin-bottom: 0.85rem;
+    }
+    .tag-amber { background: rgba(200,150,10,0.15); color: var(--amber); border: 1px solid rgba(200,150,10,0.3); }
+    .tag-blue  { background: rgba(30,87,153,0.2); color: #7daaee; border: 1px solid rgba(30,87,153,0.3); }
+    .tag-green { background: rgba(45,101,68,0.2); color: #6dcf90; border: 1px solid rgba(45,101,68,0.3); }
+    .tag-muted { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.1); }
+    .dough-card h3 { font-size: 1rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .dough-card p { font-size: 0.8rem; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 1rem; }
+    .dough-stats { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .dstat { font-size: 0.72rem; }
+    .dstat-val { font-weight: 800; color: #fff; }
+    .dstat-label { color: rgba(255,255,255,0.3); }
+    .dough-add-note {
+      background: rgba(200,150,10,0.08); border: 1px dashed rgba(200,150,10,0.25);
+      border-radius: 10px; padding: 1.1rem 1.5rem;
+      display: flex; align-items: center; gap: 1rem; font-size: 0.84rem;
+    }
+    .dough-add-note strong { color: var(--amber); }
+    .dough-add-note span { color: rgba(255,255,255,0.45); line-height: 1.5; }
+
+    /* FEATURES */
+    .features { background: var(--cream); }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .feat {
+      background: #fff; border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.4rem;
+    }
+    .feat-icon { font-size: 1.4rem; margin-bottom: 0.75rem; }
+    .feat h3 { font-size: 0.9rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .feat p { font-size: 0.8rem; color: var(--muted); line-height: 1.65; }
+
+    /* UPCOMING BATCHES FEATURE */
+    .batch-feature { background: #fff; }
+    .batch-split { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+    .batch-mock {
+      background: var(--dark); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(28,15,7,0.18);
+    }
+    .bm-header {
+      padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.45);
+      text-transform: uppercase; letter-spacing: 1px;
+      display: flex; justify-content: space-between;
+    }
+    .bm-row {
+      padding: 0.7rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: grid; grid-template-columns: 80px 1fr 60px 70px 70px;
+      gap: 0.5rem; align-items: center; font-size: 0.78rem;
+    }
+    .bm-day { color: rgba(255,255,255,0.45); }
+    .bm-type { color: #fff; font-weight: 600; }
+    .bm-qty { color: rgba(255,255,255,0.7); font-weight: 700; text-align: center; }
+    .bm-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px;
+    }
+    .bm-actions { color: rgba(255,255,255,0.25); font-size: 0.68rem; }
+    .bm-today { background: rgba(200,150,10,0.06); }
+
+    /* EXEC DASHBOARD MOCK */
+    .dashboard { background: var(--cream); }
+    .dash-mock {
+      background: var(--dark); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 24px 80px rgba(28,15,7,0.22); max-width: 860px; margin: 0 auto;
+    }
+    .dm-nav {
+      background: rgba(255,255,255,0.04); padding: 0.7rem 1.25rem;
+      display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .dm-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .dm-tabs {
+      padding: 0 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; gap: 1.5rem; font-size: 0.72rem;
+    }
+    .dm-tab { padding: 0.7rem 0; color: rgba(255,255,255,0.35); }
+    .dm-tab.active { color: #fff; font-weight: 700; border-bottom: 2px solid var(--amber); }
+    .dm-alert {
+      padding: 0.65rem 1.25rem; font-size: 0.74rem;
+      background: rgba(200,150,10,0.08); border-bottom: 1px solid rgba(200,150,10,0.12);
+      color: rgba(255,255,255,0.7);
+    }
+    .dm-alert strong { color: var(--amber); }
+    .dm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.06); }
+    .dm-card { background: var(--dark); padding: 1rem 1.25rem; }
+    .dm-label { font-size: 0.62rem; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.3rem; }
+    .dm-val { font-size: 1.35rem; font-weight: 900; }
+    .dm-sub { font-size: 0.65rem; color: rgba(255,255,255,0.3); margin-top: 2px; }
+    .dm-green { color: #4ade80; }
+    .dm-amber { color: var(--amber); }
+    .dm-red   { color: #f87171; }
+    .dm-venues { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.04); }
+    .dm-venue { background: var(--dark); padding: 0.75rem 1.25rem; font-size: 0.72rem; }
+    .dm-venue-name { color: rgba(255,255,255,0.6); font-weight: 600; margin-bottom: 3px; }
+    .dm-venue-stat { color: rgba(255,255,255,0.3); }
+
+    /* HOW IT WORKS */
+    .how { background: var(--dark); color: #fff; }
+    .how .section-sub { color: rgba(255,255,255,0.4); }
+    .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
+    .step { }
+    .step-num {
+      width: 40px; height: 40px; background: var(--amber); color: var(--dark);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 0.95rem; margin-bottom: 1rem;
+    }
+    .step h4 { font-size: 0.9rem; font-weight: 800; margin-bottom: 0.4rem; color: #fff; }
+    .step p { font-size: 0.8rem; color: rgba(255,255,255,0.4); line-height: 1.65; }
+    .step-connector {
+      display: none;
+    }
+
+    /* PRICING */
+    .pricing { background: var(--cream); }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 1rem; max-width: 860px; margin: 0 auto; }
+    .price-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 1.75rem; position: relative;
+    }
+    .price-card.featured {
+      background: var(--dark); border-color: var(--dark); color: #fff;
+      transform: scale(1.03);
+      box-shadow: 0 20px 50px rgba(28,15,7,0.2);
+    }
+    .price-badge {
+      position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+      background: var(--amber); color: var(--dark);
+      font-size: 0.67rem; font-weight: 900; letter-spacing: 0.8px;
+      text-transform: uppercase; padding: 0.22rem 0.85rem; border-radius: 20px; white-space: nowrap;
+    }
+    .price-tier { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 0.5rem; }
+    .price-card.featured .price-tier { color: rgba(255,255,255,0.4); }
+    .price-amount { font-size: 2.4rem; font-weight: 900; letter-spacing: -1.5px; line-height: 1; margin-bottom: 0.25rem; }
+    .price-amount sup { font-size: 0.95rem; vertical-align: super; letter-spacing: 0; }
+    .price-amount sub { font-size: 0.75rem; font-weight: 400; vertical-align: baseline; }
+    .price-card.featured .price-amount { color: #fff; }
+    .price-card.featured .price-amount sub { color: rgba(255,255,255,0.4); }
+    .price-desc { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.4rem; line-height: 1.55; }
+    .price-card.featured .price-desc { color: rgba(255,255,255,0.45); }
+    .price-ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .price-ul li { font-size: 0.8rem; display: flex; gap: 0.55rem; align-items: flex-start; }
+    .price-ul li::before { content: '✓'; font-weight: 800; flex-shrink: 0; margin-top: 1px; color: var(--green); }
+    .price-card.featured .price-ul li::before { color: var(--amber); }
+    .price-card.featured .price-ul li { color: rgba(255,255,255,0.75); }
+    .btn-plan {
+      width: 100%; padding: 0.75rem; border-radius: 10px; font-size: 0.88rem;
+      font-weight: 800; cursor: pointer; font-family: inherit; border: 1.5px solid var(--border);
+      background: transparent; transition: all 0.15s;
+    }
+    .btn-plan:hover { border-color: var(--dark); background: var(--cream); }
+    .btn-plan-featured {
+      width: 100%; padding: 0.75rem; border-radius: 10px; font-size: 0.88rem;
+      font-weight: 800; cursor: pointer; font-family: inherit; border: none;
+      background: var(--amber); color: var(--dark); transition: background 0.15s;
+    }
+    .btn-plan-featured:hover { background: #dda80c; }
+
+    /* FAQ */
+    .faq { background: #fff; }
+    .faq-list { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.5rem; }
+    .faq-item { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .faq-q {
+      padding: 1rem 1.25rem; font-weight: 700; font-size: 0.88rem; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+      user-select: none; transition: background 0.1s;
+    }
+    .faq-q:hover { background: var(--cream); }
+    .faq-ch { font-size: 0.75rem; color: var(--muted); flex-shrink: 0; transition: transform 0.2s; }
+    .faq-a { display: none; padding: 0 1.25rem 1rem; font-size: 0.83rem; color: var(--muted); line-height: 1.75; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .faq-ch { transform: rotate(180deg); }
+
+    /* FINAL CTA */
+    .final-cta { background: var(--dark); color: #fff; text-align: center; padding: 6rem 2rem; }
+    .final-cta h2 { font-size: clamp(1.8rem, 4.5vw, 2.8rem); font-weight: 900; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 1rem; }
+    .final-cta h2 em { font-style: normal; color: var(--amber); }
+    .final-cta p { color: rgba(255,255,255,0.45); max-width: 460px; margin: 0 auto 2.5rem; font-size: 0.95rem; line-height: 1.65; }
+
+    /* FOOTER */
+    footer {
+      background: #0e0905; padding: 1.5rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .footer-logo { font-weight: 900; font-size: 0.95rem; }
+    .footer-logo em { font-style: normal; color: var(--amber); }
+    footer p { font-size: 0.75rem; color: rgba(255,255,255,0.25); }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .metrics-inner { grid-template-columns: repeat(2, 1fr); }
+      .problem-intro { grid-template-columns: 1fr; gap: 2rem; }
+      .problem-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .batch-split { grid-template-columns: 1fr; gap: 2.5rem; }
+      .steps-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+      .price-card.featured { transform: none; }
+      .dm-grid { grid-template-columns: 1fr 1fr; }
+      .dm-venues { grid-template-columns: 1fr; }
+      section { padding: 3.5rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Dough<em>boy</em></div>
+  <div class="nav-links">
+    <a href="#problem">The Problem</a>
+    <a href="#features">Features</a>
+    <a href="#batches">Batch Planning</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <a href="#pricing" class="nav-cta">Start Free — 30 Days →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">🍕 Production intelligence for pizza kitchens</div>
+  <h1>Your exec chef's brain.<br><em>In the app.</em></h1>
+  <p class="hero-sub">Doughboy turns your chef's recipes, instincts, and standards into a live operating system that your whole team can follow — across every location, every batch, every day.</p>
+  <div class="hero-actions">
+    <button class="btn-hero" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Start Free for 30 Days →</button>
+    <button class="btn-ghost-hero" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">See What It Does</button>
+  </div>
+  <div class="hero-trust">
+    <span>No credit card required</span>
+    <span>Setup under 10 minutes</span>
+    <span>Your recipes. Your standards.</span>
+    <span>Cancel anytime</span>
+  </div>
+</section>
+
+<!-- METRICS -->
+<div class="metrics-strip">
+  <div class="metrics-inner">
+    <div class="metric">
+      <div class="metric-val">30<em>s</em></div>
+      <div class="metric-label">Average time to log a batch. Nothing slows down production.</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">0</div>
+      <div class="metric-label">Guesses about stock levels. Every venue. Real time.</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val">5+</div>
+      <div class="metric-label">Dough types supported per account — NY, Detroit, Focaccia and more.</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val"><em>∞</em></div>
+      <div class="metric-label">Batches tracked. Quality patterns your chef would never spot manually.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="container">
+    <div class="problem-intro">
+      <div>
+        <div class="section-label">The Problem</div>
+        <h2 class="section-h2">Most pizza kitchens run their most important prep on vibes.</h2>
+        <p class="section-sub" style="margin-bottom:0;">Hot days wreck batches. Stock runs out mid-service. New staff don't know the method. And the exec chef's knowledge lives entirely in their head — until it doesn't.</p>
+      </div>
+      <p class="problem-quote">"We were managing dough production across three venues with WhatsApp messages and a spreadsheet nobody updated."</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="p-icon">🤷</div>
+        <h4>Nobody knows the count</h4>
+        <p>How many balls are left across venues right now? Nobody actually knows until it's Saturday night and someone's calling in a panic.</p>
+      </div>
+      <div class="problem-card">
+        <div class="p-icon">🌡️</div>
+        <h4>Temperature kills consistency</h4>
+        <p>Same recipe, same hands, different result. Hot days destroy dough and nobody's adjusting until batches start coming out wrong.</p>
+      </div>
+      <div class="problem-card">
+        <div class="p-icon">📋</div>
+        <h4>Training doesn't stick</h4>
+        <p>New staff don't know the method. When they make a mistake, there's no system to catch it — until it shows up in the product.</p>
+      </div>
+      <div class="problem-card">
+        <div class="p-icon">📱</div>
+        <h4>Knowledge lives in one head</h4>
+        <p>Your exec chef's recipes, adjustments, and instincts aren't written down anywhere useful. One sick day and production wobbles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOUGH TYPES -->
+<section class="dough-types" id="dough-types">
+  <div class="container">
+    <div class="section-label">Multi-Dough Support</div>
+    <h2 class="section-h2" style="color:#fff;">Not just NY style.<br>Every dough you make.</h2>
+    <p class="section-sub">Your exec chef configures each dough type with their own parameters — hydration, autolyse, mix method, method notes. When production selects a type, everything pre-fills automatically. <strong style="color:rgba(255,255,255,0.8);">Their recipe. Your standards. Every time.</strong></p>
+    <div class="dough-grid">
+      <div class="dough-card">
+        <div class="dough-tag tag-amber">NY Style</div>
+        <h3>New York Style</h3>
+        <p>Cold-fermented, high-protein, hand-stretched. The workhorse of the pizza kitchen — with autolyse, temperature, and fermentation fully tracked.</p>
+        <div class="dough-stats">
+          <div class="dstat"><div class="dstat-val">60–65%</div><div class="dstat-label">Hydration</div></div>
+          <div class="dstat"><div class="dstat-val">48–72hr</div><div class="dstat-label">Cold Ferment</div></div>
+          <div class="dstat"><div class="dstat-val">DDT tracked</div><div class="dstat-label">Temp Control</div></div>
+        </div>
+      </div>
+      <div class="dough-card">
+        <div class="dough-tag tag-blue">Detroit</div>
+        <h3>Detroit Style</h3>
+        <p>Deep pan, crispy lacey cheese edges, sauce on top. Higher hydration, in-pan proof, different method entirely — configured separately so there's no confusion at production time.</p>
+        <div class="dough-stats">
+          <div class="dstat"><div class="dstat-val">70–80%</div><div class="dstat-label">Hydration</div></div>
+          <div class="dstat"><div class="dstat-val">In-pan proof</div><div class="dstat-label">Method</div></div>
+          <div class="dstat"><div class="dstat-val">By pan count</div><div class="dstat-label">Quantity</div></div>
+        </div>
+      </div>
+      <div class="dough-card">
+        <div class="dough-tag tag-green">Focaccia</div>
+        <h3>Focaccia</h3>
+        <p>High-hydration, olive oil-rich, stretch-and-fold technique. Used for functions, restaurant service, or both — tracked as its own dough type with its own method notes.</p>
+        <div class="dough-stats">
+          <div class="dstat"><div class="dstat-val">75–85%</div><div class="dstat-label">Hydration</div></div>
+          <div class="dstat"><div class="dstat-val">Stretch & Fold</div><div class="dstat-label">Mix Method</div></div>
+          <div class="dstat"><div class="dstat-val">By tray</div><div class="dstat-label">Quantity</div></div>
+        </div>
+      </div>
+      <div class="dough-card">
+        <div class="dough-tag tag-muted">+ More</div>
+        <h3>Add Any Dough Type</h3>
+        <p>Neapolitan, sourdough, Roman al taglio, gluten-free — any dough your kitchen makes can be configured as a preset and tracked in the batch log.</p>
+        <div class="dough-stats">
+          <div class="dstat"><div class="dstat-val">Custom</div><div class="dstat-label">Hydration</div></div>
+          <div class="dstat"><div class="dstat-val">Custom</div><div class="dstat-label">Method</div></div>
+          <div class="dstat"><div class="dstat-val">Your recipe</div><div class="dstat-label">Parameters</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dough-add-note">
+      <div style="font-size:1.4rem; flex-shrink:0;">🔒</div>
+      <span><strong>Your recipes stay yours.</strong> Doughboy doesn't come with recipes — your exec chef enters their own parameters. The platform enforces your standards, not ours.</span>
+    </div>
+  </div>
+</section>
+
+<!-- UPCOMING BATCHES -->
+<section class="batch-feature" id="batches">
+  <div class="container">
+    <div class="batch-split">
+      <div>
+        <div class="section-label">Batch Planning</div>
+        <h2 class="section-h2">Know what you're making<br>before the week starts.</h2>
+        <p class="section-sub" style="margin-bottom:1.5rem;">Your exec chef plans batch targets for the week ahead — how many, what type, which days. The team sees exactly what's expected. No guessing, no last-minute scrambles.</p>
+        <ul style="list-style:none; display:flex; flex-direction:column; gap:0.75rem;">
+          <li style="display:flex; gap:0.75rem; align-items:flex-start; font-size:0.88rem;">
+            <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">→</span>
+            <span><strong>Weekly production calendar</strong> — set batch targets per day, per dough type. Adjust on the fly when service demands change.</span>
+          </li>
+          <li style="display:flex; gap:0.75rem; align-items:flex-start; font-size:0.88rem;">
+            <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">→</span>
+            <span><strong>Actual vs target tracking</strong> — see at a glance when production fell short and why. Spot patterns over weeks.</span>
+          </li>
+          <li style="display:flex; gap:0.75rem; align-items:flex-start; font-size:0.88rem;">
+            <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">→</span>
+            <span><strong>Multiple dough types per day</strong> — schedule NY for morning service, Detroit for a function afternoon, Focaccia for restaurant. All tracked separately.</span>
+          </li>
+          <li style="display:flex; gap:0.75rem; align-items:flex-start; font-size:0.88rem;">
+            <span style="color:var(--amber); font-weight:800; flex-shrink:0; margin-top:1px;">→</span>
+            <span><strong>Weather-adjusted recommendations</strong> — hot day coming? Doughboy flags it and pre-suggests adjustments before production starts.</span>
+          </li>
+        </ul>
+      </div>
+      <div class="batch-mock">
+        <div class="bm-header">
+          <span>Production Schedule — This Week</span>
+          <span style="color:var(--amber);">+ Add Batch</span>
+        </div>
+        <div class="bm-row bm-today">
+          <span class="bm-day" style="color:var(--amber); font-weight:700;">Today</span>
+          <span class="bm-type">NY Style <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">× 2 batches</span></span>
+          <span class="bm-qty">288</span>
+          <span style="font-size:0.7rem;"><span class="bm-status-dot" style="background:#4ade80;"></span><span style="color:#4ade80;">Done</span></span>
+          <span class="bm-actions">···</span>
+        </div>
+        <div class="bm-row">
+          <span class="bm-day">Tomorrow</span>
+          <span class="bm-type">NY Style <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">× 2 batches</span></span>
+          <span class="bm-qty">288</span>
+          <span style="font-size:0.7rem;"><span class="bm-status-dot" style="background:rgba(255,255,255,0.15);"></span><span style="color:rgba(255,255,255,0.3);">Scheduled</span></span>
+          <span class="bm-actions">···</span>
+        </div>
+        <div class="bm-row">
+          <span class="bm-day">Wed</span>
+          <span class="bm-type">Detroit <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">× 1 batch</span></span>
+          <span class="bm-qty">16 pans</span>
+          <span style="font-size:0.7rem;"><span class="bm-status-dot" style="background:rgba(255,255,255,0.15);"></span><span style="color:rgba(255,255,255,0.3);">Scheduled</span></span>
+          <span class="bm-actions">···</span>
+        </div>
+        <div class="bm-row">
+          <span class="bm-day">Thu</span>
+          <span class="bm-type">NY Style <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">× 3 batches</span></span>
+          <span class="bm-qty">432</span>
+          <span style="font-size:0.7rem;"><span class="bm-status-dot" style="background:rgba(255,255,255,0.15);"></span><span style="color:rgba(255,255,255,0.3);">Scheduled</span></span>
+          <span class="bm-actions">···</span>
+        </div>
+        <div class="bm-row">
+          <span class="bm-day">Fri</span>
+          <span class="bm-type">NY Style + Focaccia</span>
+          <span class="bm-qty">Mixed</span>
+          <span style="font-size:0.7rem;"><span class="bm-status-dot" style="background:rgba(255,255,255,0.15);"></span><span style="color:rgba(255,255,255,0.3);">Scheduled</span></span>
+          <span class="bm-actions">···</span>
+        </div>
+        <div class="bm-row" style="border:none;">
+          <span class="bm-day">Sat</span>
+          <span class="bm-type">NY Style <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">× 3 batches</span></span>
+          <span class="bm-qty">432</span>
+          <span style="font-size:0.7rem;"><span class="bm-status-dot" style="background:rgba(255,255,255,0.15);"></span><span style="color:rgba(255,255,255,0.3);">Scheduled</span></span>
+          <span class="bm-actions">···</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-label">Full Feature Set</div>
+    <h2 class="section-h2">Everything your kitchen<br>needs. Nothing it doesn't.</h2>
+    <p class="section-sub">Built specifically for multi-dough, multi-venue pizza production. Not a generic restaurant app retrofitted for kitchens.</p>
+    <div class="features-grid">
+      <div class="feat">
+        <div class="feat-icon">🌡️</div>
+        <h3>Weather-Adjusted Batch Calls</h3>
+        <p>Live forecast integration. Hot day? Doughboy flags it and recommends adjustments to hydration, ice, and autolyse before production starts.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📊</div>
+        <h3>Live Cross-Venue Stock</h3>
+        <p>Every venue submits an EOD count. Your exec chef sees who has stock, who's running low, and who hasn't reported — the moment they open the app.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🔔</div>
+        <h3>Smart Executive Alerts</h3>
+        <p>Missed EOD reports, training gaps, hot day forecasts, overdue tray returns — Doughboy surfaces problems before they become emergencies.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🎓</div>
+        <h3>Built-In Training Modules</h3>
+        <p>8 structured modules the exec chef controls entirely — their content, their videos, their standards. Track who's done what per venue.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">👥</div>
+        <h3>Role-Based Access</h3>
+        <p>Exec Chef, Head Chef, Dough Production, Pizza Chef — each role sees exactly what they need. Invite new staff in seconds.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📡</div>
+        <h3>Instant Staff Broadcasts</h3>
+        <p>Push a message to all venues or just one. Hot day adjustments, recipe changes, urgent callouts — no group chats required.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📝</div>
+        <h3>Full Batch History & Quality Log</h3>
+        <p>Every batch logged with dough type, temperatures, hydration, autolyse, and quality score. Spot patterns your chef would never notice manually.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">⚙️</div>
+        <h3>Exec Chef Controls Everything</h3>
+        <p>Dough presets, production defaults, autolyse settings, training content, staff permissions — your chef owns the platform, not the other way around.</p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📍</div>
+        <h3>Multi-Venue Designed</h3>
+        <p>Venue snapshots, per-venue training progress, compliance tracking, and delivery scheduling built in from day one — not bolted on after.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXEC DASHBOARD MOCK -->
+<section class="dashboard">
+  <div class="container">
+    <div class="section-label" style="text-align:center;">Live Dashboard</div>
+    <h2 class="section-h2" style="text-align:center; margin-bottom:0.75rem;">What your exec chef sees<br>before the first bag opens.</h2>
+    <p class="section-sub" style="margin: 0 auto 2.5rem; text-align:center;">One screen. Every venue. Every alert. Every batch from the day before — logged and accounted for.</p>
+    <div class="dash-mock">
+      <div class="dm-nav">
+        <div class="dm-dot" style="background:#f87171;"></div>
+        <div class="dm-dot" style="background:var(--amber);"></div>
+        <div class="dm-dot" style="background:#4ade80;"></div>
+        <div style="flex:1; height:5px; background:rgba(255,255,255,0.05); border-radius:3px; margin-left:0.75rem;"></div>
+      </div>
+      <div class="dm-tabs">
+        <div class="dm-tab active">Dashboard</div>
+        <div class="dm-tab">Batch Log</div>
+        <div class="dm-tab">Exec Tools</div>
+        <div class="dm-tab">Admin</div>
+      </div>
+      <div class="dm-alert">🌡️ <strong>Tomorrow 31°C</strong> — reduce hydration 1%, ice on batch 2, autolyse on. <span style="color:var(--amber); cursor:pointer;">Broadcast to team →</span></div>
+      <div class="dm-grid">
+        <div class="dm-card">
+          <div class="dm-label">Total Balls Available</div>
+          <div class="dm-val dm-green">486</div>
+          <div class="dm-sub">Across 3 venues · 4min ago</div>
+        </div>
+        <div class="dm-card">
+          <div class="dm-label">Batches Today</div>
+          <div class="dm-val">3 / 3</div>
+          <div class="dm-sub">All logged ✓</div>
+        </div>
+        <div class="dm-card">
+          <div class="dm-label">EOD Compliance</div>
+          <div class="dm-val dm-amber">2 / 3</div>
+          <div class="dm-sub">Venue 3 — overdue ⚠</div>
+        </div>
+      </div>
+      <div class="dm-venues">
+        <div class="dm-venue">
+          <div class="dm-venue-name">Main Kitchen ✓</div>
+          <div class="dm-venue-stat">204 balls · NY Style · EOD submitted</div>
+        </div>
+        <div class="dm-venue">
+          <div class="dm-venue-name">Venue 2 ✓</div>
+          <div class="dm-venue-stat">168 balls · Restocked Tue · EOD submitted</div>
+        </div>
+        <div class="dm-venue">
+          <div class="dm-venue-name" style="color:#f87171;">Venue 3 ⚠</div>
+          <div class="dm-venue-stat">Unknown · EOD missing · 2nd consecutive</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="section-label">Setup</div>
+    <h2 class="section-h2" style="color:#fff;">Running in under<br>10 minutes.</h2>
+    <p class="section-sub">No IT. No integration. No training period. Just open it and go.</p>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Configure Your Kitchen</h4>
+        <p>Add your venues, exec chef, and team. Set your dough types and parameters — your recipes, your numbers. Nothing is prescribed.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Invite Your Team</h4>
+        <p>Each role gets the right access. Pizza chefs see training and submit EOD. Dough production logs batches. Exec chef runs everything.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Log Every Batch</h4>
+        <p>Select dough type. Parameters pre-fill from exec chef's presets. Log temps and autolyse. Done in under two minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Exec Chef Stays Sharp</h4>
+        <p>Dashboard shows every venue, every batch, every alert. Adjust the week's production schedule in seconds. Broadcast to staff in one tap.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label" style="text-align:center;">Pricing</div>
+    <h2 class="section-h2" style="text-align:center; margin-bottom:0.75rem;">One bad batch costs more<br>than a year of Doughboy.</h2>
+    <p class="section-sub" style="margin:0 auto 3rem; text-align:center;">30-day free trial. Full access. No card. Keep everything when you upgrade.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount"><sup>$</sup>79<sub> /mo AUD</sub></div>
+        <p class="price-desc">One production kitchen, one team. Everything you need to run tight, consistent dough.</p>
+        <ul class="price-ul">
+          <li>1 venue</li>
+          <li>Up to 3 dough type presets</li>
+          <li>Batch log + history</li>
+          <li>EOD reporting</li>
+          <li>Weather recommendations</li>
+          <li>8-module training system</li>
+          <li>30-day free trial</li>
+        </ul>
+        <button class="btn-plan">Start Free Trial</button>
+      </div>
+      <div class="price-card featured">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-tier">Multi-Venue</div>
+        <div class="price-amount"><sup>$</sup>129<sub> /mo AUD</sub></div>
+        <p class="price-desc">Multiple locations, one exec chef in control. This is where Doughboy earns its keep.</p>
+        <ul class="price-ul">
+          <li>Up to 5 venues</li>
+          <li>Unlimited dough type presets</li>
+          <li>Live cross-venue stock dashboard</li>
+          <li>Smart exec alert system</li>
+          <li>Per-venue training tracking</li>
+          <li>Weekly production calendar</li>
+          <li>Staff broadcast system</li>
+          <li>30-day free trial</li>
+        </ul>
+        <button class="btn-plan-featured">Start Free Trial →</button>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount" style="font-size:1.6rem; line-height:1.2; padding-top:0.25rem;">Let's<br>Talk</div>
+        <p class="price-desc">6+ venues, franchise groups, or custom requirements. We'll build around you.</p>
+        <ul class="price-ul">
+          <li>Unlimited venues</li>
+          <li>Custom onboarding</li>
+          <li>Dedicated support</li>
+          <li>Custom training content</li>
+          <li>White-label option</li>
+          <li>Priority feature requests</li>
+        </ul>
+        <button class="btn-plan" onclick="window.location='mailto:hello@doughboy.app'">Contact Us</button>
+      </div>
+    </div>
+    <p style="text-align:center; margin-top:1.75rem; font-size:0.8rem; color:var(--muted);">
+      🔒 Founding customer rate available — contact us now for a locked-in discount before public launch.
+    </p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-label" style="text-align:center;">Questions</div>
+    <h2 class="section-h2" style="text-align:center; margin-bottom:2.5rem;">Straight answers.</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Do you provide the recipes? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">No — and that's intentional. Your exec chef enters their own recipes, hydration targets, autolyse settings, and method notes. Doughboy enforces your standards, not ours. Your IP stays yours.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can we add our own dough types? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">Yes. NY Style, Detroit, Focaccia, Neapolitan, sourdough, gluten-free — any dough you produce can be configured as a preset with its own parameters. Switch between types at production time and everything pre-fills from your chef's settings.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Does it work across multiple venues? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">That's exactly what it's built for. Each venue submits their own EOD count, tracks their own training, and gets their own alerts. The exec chef sees it all in one dashboard — stock levels, compliance, and training status — across every location at once.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Do I need to install anything? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">Nothing. Doughboy runs in any browser — phone, tablet, or computer. No app store, no IT setup, no software to install or update. Open it and you're in.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What happens to my data after the trial? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">Nothing is deleted. The app prompts you to activate a licence — activate it and you're back in instantly with all your batch history, presets, and team data exactly as you left it.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can my exec chef control the training content? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">Completely. Training modules are configured by the exec chef — they write the content, add video links when they're ready, and decide what each role needs to complete. Doughboy provides the structure and tracking; your chef provides the knowledge.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What if we make more than pizza? <span class="faq-ch">▼</span></div>
+        <div class="faq-a">Doughboy tracks any fermented dough production — pizza, focaccia, flatbreads, pan bread, calzone bases. If it's mixed in a batch and tracked by count or weight, Doughboy handles it. Each product type gets its own preset.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <h2>The exec chef knows<br>exactly what to make.<br><em>Now so does everyone else.</em></h2>
+  <p>Start your 30-day free trial. No card, no commitment. Full access to every feature from day one.</p>
+  <button class="btn-hero" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Start Free for 30 Days →</button>
+  <p style="margin-top:1.5rem; font-size:0.76rem; color:rgba(255,255,255,0.25);">Questions? hello@doughboy.app</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Dough<em>boy</em></div>
+  <p>Pizza production intelligence · Built in Brisbane · © 2026</p>
+</footer>
+
+</body>
+</html>
