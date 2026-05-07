@@ -113,6 +113,6 @@ Doughboy tracks any fermented dough production - pizza, focaccia, flatbreads, pa
 
 ## Contact
 
-📧 [hello@doughboy.app](mailto:hello@doughboy.app)
+📧 [info@streamables.live](mailto:info@streamables.live)
 
 Built in Brisbane. © 2026.
